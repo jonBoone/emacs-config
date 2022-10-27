@@ -1,5 +1,7 @@
 #+SETUPFILE: "~/.emacs.d/org-config.org"
 #+TITLE: My org-babel based emacs configuration
+#+SUBTITLE: derived from [[https://github.com/mrvdb/emacs-config][Marcel van der Boom's Emacs Config]]
+#+SUBTITLE: with additions from [[http://www.eastpyne.org/Emacs/fsem.html][Rob Rix's Hardcore Freestyle Emacs config]]
 #+LANGUAGE: en
 #+OPTIONS:  H:5 toc:nil creator:nil email:nil author:t timestamp:t tags:nil tex:verbatim
 #+PROPERTY: header-args :results silent :noweb no-export
@@ -36,7 +38,6 @@ Small snippet to have last modified timestamp inserted when exporting this file 
 git log -1 --pretty="format:%ci" ~/.emacs.d/mrb.org
 #+END_SRC
 
-
 * Preparing for lift-off
 The first thing I want to take care of is to make customization possible and stored in a place to my liking. I want to load this first so anything in the configuration I define explicitly overrides it.
 
@@ -53,8 +54,6 @@ The config file =mrb.org= gets opened *a lot* because I tend to fiddle with this
     (find-file config-file))
 #+end_src
 
-
-
 Most of the time the editing process starts at the command line. Because I use emacs in server mode, this needs a little script.  The script does two things:
 1. check if we already have the emacs server, if not, start it;
 2. treat input from stdin a little bit special.
@@ -66,7 +65,7 @@ While we are here, define a snippet which should go in shell scripts. We will re
 [ Org-mode generated this file from a code block, changes will be overwritten ]
 #+end_src
 
-And edit the file obviously.
+And edit the file obviously. __Note: this script passes shellcheck with no warnings or errors__
 
 #+begin_src sh :exports code :tangle ~/bin/edit :shebang #!/bin/bash
   # <<tangle-header>>
@@ -75,8 +74,8 @@ And edit the file obviously.
   # - stdin editing
   # - force tty
   # - adjustment to systemd invocation
-  ME=$(basename $0)
-  EC=`which emacsclient`
+  ME=$(basename $"0")
+  EC=$(which emacsclient)
   SNAME=server
   SFILE=$XDG_RUNTIME_DIR/emacs/$SNAME
 
@@ -84,7 +83,7 @@ And edit the file obviously.
   ARGS="--socket-name=$SNAME --suppress-output"
 
   # Set to false when done
-  debug() { false $@; }
+  debug() { false $"@"; }
 
   # Do we already have an emacs?
   # I could let emacsclient do this automatically, but it
@@ -95,7 +94,7 @@ And edit the file obviously.
       debug "Emacs systemd service not active...";
 
       # We might have a socket though
-      if [ -S $SFILE ];then
+      if [ -S "$SFILE" ];then
           # The systemd starting has always been a little problematic
           # with the environment, so I might have a server running another
           # way.
@@ -105,27 +104,27 @@ And edit the file obviously.
       else
           debug "...and we have no socket either."
           notify-send "Starting Emacs server, this might take a while....";
-          emacs --bg-daemon=$SFILE
+          emacs --bg-daemon="$SFILE"
           #systemctl --user start emacs
       fi
   fi
 
   # Assert that the socket file exists
-  [ ! -S $SFILE ] || debug "Socket file not found???\n"
+  [ ! -S "$SFILE}" ] || debug "Socket file not found???\n"
 
   # Handle special 'stdin' case
   if [ $# -ge 1 ] && [ "$1" == "-" ]; then
       TMPSTDIN="$(mktemp /tmp/emacsstdinXXX)";
       cat >"$TMPSTDIN";
       # Recurse or call with flags below
-      $ME $TMPSTDIN;
-      rm $TMPSTDIN;
+      $ME "$TMPSTDIN";
+      rm "$TMPSTDIN";
       exit 0;
   fi
 
   # We're basically expecting X windows, but if not, we good
   # force tty: call this like 'DISPLAY="" edit ....' see my aliases
-  if [ $DISPLAY ]; then
+  if [ "$DISPLAY" ]; then
       debug "X-display value seen, using GUI"
       case $ME in
         "edit")
@@ -148,7 +147,7 @@ And edit the file obviously.
   fi
 
   # Go with the original arguments
-  exec $EC ${ARGS} "$@"
+  exec $EC "${ARGS}" "$@"
 #+end_src
 
 The above script is the result of trying to get the server based setup of Emacs a little better. The thoughts leading to the above script are included below.
@@ -174,7 +173,8 @@ Having a server/servers opens a couple of options which I may like, but not sure
 
 - having multiple emacs servers could help with specific scenario's for mu4e for example. I'd love to have the mu-server in its own process and just use that from other emacs servers Similarly for long running language servers and or other processes which shouldn't be affected by me clawing words into my keyboard.
 
-* Package Management
+*
+Package Management
 Package handling, do this early so emacs knows where to find things. Package handling basically means two things:
 
 1. getting and installing packages, by default handled by package.el;
@@ -208,7 +208,7 @@ Now that we have =straight= we can use it to install =use-package=
   ;; From this point on we should be able to use `use-package
   (use-package straight
     :config
-    (setq straight-host-usernames '((github . "mrvdb"))) ; Move to personal information?
+    (setq straight-host-usernames '((github . "jonBoone"))) ; Move to personal information?
     ;; Make sure packages do not pull in internal org, we pregister org from straight.el
     (straight-register-package 'org)
     (straight-register-package 'org-contrib)
@@ -236,7 +236,6 @@ As emacs lives inside the systemd environment it is not automatically the case t
 
 This makes sure that things like TeX and git and other programs run in the same context as they would in my shell. Especially for guix-installed programs this is important.
 
-
 * Personal information
 I'd like to arrange 3 things related to personal information:
 1. register the proper identification to use;
@@ -248,20 +247,21 @@ So, identification, authorization and encryption.
 Seems like a good idea to start configuration with some details about me. The idea being that anything personal goes here and nowhere else. For one, this means my name only appears in this section in this document. Most of the variables I just made up, but some are used in other places too.
 
 #+begin_src emacs-lisp
-  (setq mrb/default-email-address "marcel@hsdev.com"
+  (setq mrb/default-email-address "ipmonger@delamancha.org"
         mrb/default-signature-file "~/Maildir/.signature"
         mrb/private-addresses '("marcel@van-der-boom.nl" "m@rcel.van-der-boom.nl")
         mrb/private-signature-file "~/Maildir/.signature-private"
         mrb/default-private-address (car mrb/private-addresses)
 
-        mrb/bcc-address      "mrb+Sent@hsdev.com"
-        user-full-name       "Marcel van der Boom"
+        mrb/bcc-address      "ipmonger@delamancha.org"
+        user-full-name       "Jon Allen Boone"
         user-mail-address    mrb/default-email-address
-        user-domain          "hsdev.com"
-        user-organisation    "HS-Development BV"
-        user-gpg-encrypt-key "77DDA1B68D04792A8F85D855235E5C8CF5E8DFFB"
+        user-domain          "delamancha.org"
+        user-organisation    "N/A"
+        user-gpg-encrypt-key "E57ED1E3B5A96490C4F544B425B64512B9B7A4F1"
         )
 #+end_src
+
 
 ** Authorization
 Several things I use within Emacs need authorization, such as tramp, jabber, erc etc. The authorization can come from several sources; ideally as few as possible. Many packages in Emacs have support for a =.netrc= like mechanism, others want to use the key ring in GNOME. The variables =auth-sources= defines the sources available.
@@ -602,154 +602,31 @@ Let's set up some basics first, background dark, some default frame and cursor p
             (mouse-color . "white")))
 #+end_src
 
-I'm using the [[https://github.com/arcticicestudio/nord][Nord color palette]]. This palette defines 16 colors.
-
-There is a base16 theme which uses exactly these colors and there are varieties which use the 16 colors and some derivatives of it.
-
-Although I think the 16 color system is a bit simplistic and, for emacs at least, I will need to customize more later on, the main lure of this system is that I can use the same set for many of my programs I use (emacs, xterm, i3, dunst etc.) which sounds attractive. So, I'm starting with the =base16-nord= theme and see where this leaves me.
+mrvdb used the [[https://github.com/arcticicestudio/nord][Nord color palette]]. This palette defines 16 colors, applying it to the base16 theme.  Since it is not to my taste, I have removed that code and replaced it with [[https://github.com/protesilaos/modus-themes][Modus Themes]].
 
 #+begin_src emacs-lisp
-  (setq custom--inhibit-theme-enable nil)  ; This was needed for Emacs 27, but cant recall why
-  (use-package base16-theme
+  ;; use the modus-themes
+  (use-package modus-themes
+    :ensure
+    :init
+    ;; Add all your customizations prior to loading the themes
+    (setq modus-themes-italic-constructs t
+          modus-themes-bold-constructs t
+          modus-themes-mixed-fonts t
+          modus-themes-mode-line '(accented borderless (padding . 4) (height . 0.9))
+          modus-themes-org-blocks 'tinted-background
+          modus-themes-region '(bg-only no-extend))
+
+    ;; Load the theme files before enabling a theme
+    (modus-themes-load-themes)
     :config
-    ;; Do config here and finally load the theme
-    (setq base16-theme-distinct-fringe-background nil
-          base16-theme-highlight-mode-line 'contrast
-          base16-theme-256-color-source "terminal")
-    (load-theme 'base16-nord t)
-
-    ;; Define our adjustments to faces
-    ;; This should be the only place where we adjust our faces
-    ;; For reference, these are the theme colors
-
-     ;; :base00 "#2e3440"
-     ;; :base01 "#3b4252"
-     ;; :base02 "#434c5e"
-     ;; :base03 "#4c566a"
-     ;; :base04 "#d8dee9"
-     ;; :base05 "#e5e9f0"
-     ;; :base06 "#eceff4"
-     ;; :base07 "#8fbcbb"
-     ;; :base08 "#88c0d0"
-     ;; :base09 "#81a1c1"
-     ;; :base0A "#5e81ac"
-     ;; :base0B "#bf616a"
-     ;; :base0C "#d08770"
-     ;; :base0D "#ebcb8b"
-     ;; :base0E "#a3be8c"
-     ;; :base0F "#b48ead"
-
-    ;; FIXME: some of these adjustments come in too early and the package redefines it on loading
-    ;; the only solution for this is to move the visual adjustments in the use-package clauses of
-    ;; the package itself.
-    (setq base16-adjustments
-          `((vterm-color-black :foreground "#2e3440")
-            (vterm-color-red :foreground "#bf616a")
-            (vterm-color-green :foreground "#a3be8c")
-            (vterm-color-yellow :foreground "#ebcb8b")
-            (vterm-color-blue :foreground "#81a1c1")
-            (vterm-color-cyan :foreground "#88c0c0")
-            (vterm-color-magenta :foreground "#b48ead")
-
-            ;; Explicitly define the outline colors
-            (outline-1 :foreground "#5e81ac")
-            (outline-2 :foreground "#a3be8c")
-            (outline-3 :foreground "#b48ead")
-            (outline-4 :foreground "#81a1c1")
-            (outline-5 :foreground "#ebcb8b")
-            (outline-6 :foreground "#8fbcbb")
-            (outline-7 :foreground "#d08770")
-            (outline-8 :foreground "#bf616a")
-
-            ;; Adjustment for non-package faces
-            ;; Comments should not be that dark as base03
-            (font-lock-comment-face         :foreground "#666666")
-            (button                         :foreground "#d08770" :weight semi-bold)
-
-            (show-paren-match               :foreground "#eceff4" :background "#81a1c1"
-                                            :inherit nil :weight normal)
-            (show-paren-mismatch            :foreground "#2e3440" :background "#bf616a"
-                                            :inherit nil :weight normal)
-
-            (region                         :foreground nil :background "#3b4252"
-                                            :inherit nil :weight normal)
-            (fringe                         :foreground "#a3be8c")
-
-            (hl-line                        :foreground nil :background "#5e81ac" )
-
-            (line-number-current-line       :background "#4c566a")
-
-            (lazy-highlight                 :foreground "#434c5e" :background "#5e81ac")
-            (isearch                        :foreground "#434c5e" :background ,mrb/cursor-color)
-
-            ;; Mode-line faces
-            (mode-line                      :foreground "#3b4252" :background "#ebcb8b")
-            (header-line                    :foreground "#4c566a" :background "#ebcb8b")
-
-            ;; Magit
-            (diff-refine-added              :background "#003000")
-            (diff-refine-removed            :background "#300000")
-            (magit-diff-added-highlight     :foreground "#a3be8c")
-            (magit-diff-removed-highlight   :foreground "#bf616a")
-            (magit-diff-added               :foreground "#a3be8c")
-            (magit-diff-removed             :foreground "#bf616a")
-            (magit-diff-hunk-heading-highlight :background "#5e81ac")
-            (magit-diff-hunk-heading           :background "#5e81ac")
-
-            ;; Elfeed
-            (elfeed-search-tag-face         :foreground "#a3be8c")
-            (elfeed-search-feed-face        :foreground "#ebcb8b")
-            (elfeed-search-date-face        :foreground "#88c0d0")
-
-            ;; Flyspell
-            ;; flyspell errors/dupes look the same as flycheck-errors/warnings
-            (flyspell-incorrect                                   :inherit flycheck-error)
-            (flyspell-duplicate             :foreground "#2e3440" :inherit flycheck-warning)
-
-            ;; Orgmode
-            (org-headline-done              :foreground "#4c566a")
-            (org-date                       :foreground "#8fbcbb" :underline nil)
-
-            (org-verbatim                   :foreground "#8fbcbb")
-            (org-list-dt                    :foreground "#b48ead")
-            (org-drawer                     :height 0.8 :inherit font-lock-comment-face)
-            (org-code                       :foreground "Purple" :weight bold)
-            (org-block                      :background "#313745")
-            (org-block-begin-line           :foreground "dark gray")
-
-            ;; User defined faces for org-mode
-            (mrb/org-todo-keyword-TODO      :foreground "#88c0d0" :weight bold)
-            (mrb/org-todo-keyword-DONE      :foreground "#a3be8c" :weight bold)
-            (mrb/org-todo-keyword-WAITING   :foreground "#bf616a" :weight bold)
-            (mrb/org-todo-keyword-CANCELLED :foreground "#3b4252" :weight bold)
-            (mrb/org-todo-keyword-BUY       :foreground "#d08770" :weight bold)
-            (mrb/org-todo-keyword-HOWTO     :foreground "#5e81ac" :weight bold)
-            (mrb/org-todo-keyword-INFO      :foreground "#ebcb8b" :weight bold)
-            (mrb/org-todo-keyword-COLLECT   :foreground "#a3be8c" :weight bold)
-            (mrb/org-todo-keyword-SOLVE     :foreground "#8fbcbb" :weight bold)
-            (mrb/org-todo-keyword-READ      :foreground "#b48ead" :weight bold)
-            (mrb/org-todo-keyword-READING   :foreground "#bf616a" :weight bold)
-            (mrb/org-todo-keyword-PLAN      :foreground "#d8dee9" :weight bold)
-
-            ;; Helm selection
-            (helm-selection                 :foreground "black" :background "goldenrod2")
-            (helm-M-x-key                   :foreground "#bf616a")
-
-            ;; Mu4e
-            (mu4e-header-highlight-face     :inherit hl-line :underline nil :foreground nil)
-            (mu4e-context-face              :inherit mu4e-link-face)
-
-            ;; Man pages inside emacs
-            (Man-overstrike                 :foreground "#bf616a" :weight bold)
-            (Man-underline                  :foreground "#a3be8c" :weight bold)
-            ))
-
-    ;; Apply our adjustment using the theme function
-    (base16-theme-set-faces 'base16-nord base16-nord-theme-colors base16-adjustments))
+    ;; load the themes of your choice:
+    (load-theme 'modus-operandi t t)
+    (load-theme 'modus-vivendi t t)
+    (enable-theme 'modus-vivendi))
 #+end_src
 
 Miscellaneous other visual settings follow.
-
 #+begin_src emacs-lisp
   ;; no splash screen
   (setq inhibit-startup-screen  t)
@@ -774,9 +651,9 @@ Miscellaneous other visual settings follow.
 
   (use-package spaceline-config
     :after tracking
-   ;;   :requires eyebrowse
-  ;;   :requires persp-mode
-  ;;   :requires window-numbering
+    ;;   :requires eyebrowse
+    ;;   :requires persp-mode
+    ;;   :requires window-numbering
     :config
     ;; Define a segment for the tracking package
     (spaceline-define-segment tracking
@@ -807,6 +684,31 @@ Miscellaneous other visual settings follow.
 
   ;; Give commands the option to display full-screen
   (use-package fullframe)
+
+  ;; Use whitespace mode to cleanup excess whitespace
+  (use-package whitespace
+    :diminish (('whitespace-mode        . "ᗣ")
+               ('global-whitespace-mode . "ᗣ"))
+    :config
+    ;; whitespace-style rules
+    (setq whitespace-style '(indentation::space
+                             space-after-tab
+                             space-before-tab
+                             trailing
+                             lines-tail
+                             tab-mark
+                             face
+                             tabs))
+    ;; whitespace-cleanup on all saves
+    (add-hook 'before-save-hook 'whitespace-cleanup)
+    ;; enable whitespace mode on text-mode and derivatives
+    (defun mrb/setup-text-mode ()
+      "apply all text-mode customizations"
+      (whitespace-mode 1))
+    (add-hook 'text-mode-hook 'mrb/setup-text-mode))
+
+  ;; remove trailing whitespace
+  (add-hook 'before-save-hook 'delete-trailing-whitespace)
 #+end_src
 
 ** Lines
@@ -821,7 +723,7 @@ To help me see the difference between visual lines and logical lines I let emacs
 #+begin_src emacs-lisp
   ;; Set some defaults
   (setq-default word-wrap t               ; why would i want to have no wrapping by word?
-                fill-column 100
+                fill-column 80
                 truncate-lines nil)
 
   (use-package visual-fill-column
@@ -855,7 +757,12 @@ Line-numbering is off by default, it tends to slow things down, but if I want it
     :config
     (setq
      display-line-numbers-type 'relative)
-    (display-line-numbers-mode -1))
+    (display-line-numbers-mode t))
+#+end_src
+
+Column-numbering is off by default, but I want it on.
+#+begin_src eamcs-lisp
+  (column-number-mode t)
 #+end_src
 
 ** Client dependent settings
@@ -1003,7 +910,7 @@ How do I deal with all those buffers and files?
 For starters, make sure that they have unique buffer names so I don't get confused:
 
 #+begin_src emacs-lisp
-  (setq uniquify-buffer-name-style 'forward)
+  (setq uniquify-buffer-name-style 'post-forward-angle-brackets)
 #+end_src
 
 For every file-based buffer, I want auto-save to be on, but not in the same location as the file, as that clutters up everything. For that, I add to the list of file-name transforms to have (local) files auto saved in a designated folder)
@@ -1787,16 +1694,16 @@ I combine =ical2orgpy= with a cron job which pulls in the calendars I am interes
   WGET="/usr/bin/wget -O wget.log -O - --quiet"
 
   # Base URI for calendar access, perhaps also put in the datafile?
-  CALBASE="https://calendars.hsdev.com/mrb"
+  #CALBASE="https://calendars.hsdev.com/mrb"
 
   # Just go over each one manually
   # FIXME make this nice with url . file pairs in a loop
-  cd $BASEDIR
+  cd "$BASEDIR" || exit
 
   # Read destination org file and the calendar id from a file .calendars
   while IFS=' ' read -r orgfile calendar_id
   do
-      $WGET "$CALBASE/$calendar_id" 2>/dev/null | $ICAL2ORGPY - $orgfile
+      $WGET "$CALBASE/$calendar_id" 2>/dev/null | $ICAL2ORGPY - "$orgfile"
   done < .calendars
 #+end_src
 
@@ -2429,6 +2336,7 @@ Treading cautiously here as ideally frames sizing is the responsibility of the w
   (bind-key "<S-s-down>"  'windmove-down)
 
 #+end_src
+
 *** For active regions
 In quite a few situations I would like to use keybindings which are only valid when a selection/region is active.
 
@@ -2664,17 +2572,36 @@ For most of the completion that is needed which is not inline (for which I am us
 
 #+begin_src emacs-lisp
   (use-package helm
-    :diminish
+    :diminish ('helm-mode . "H")
     :bind
     (("C-c M-x" . 'execute-extended-command) ;; Save the default
+     ("M-y"     . 'helm-show-kill-ring)      ;; display kill ring
      ("M-x"     . 'helm-M-x)                 ;; Replace M-x
      ("<menu>"  . 'helm-M-x)                 ;; ..and on the menu key as well
+     ("C-h SPC" . 'helm-all-mark-rings)      ;; show mark rings
+     ("C-:"     . 'helm-company)             ;; autocomplete with helm
      ("C-x C-f" . 'helm-find-files)          ;; Find files
      ("C-x b" .   'helm-buffers-list))       ;; Find buffers
     :config
+    (setq helm-scroll-amount 4
+          helm-quick-update t
+          helm-idle-delay 0.01
+          helm-input-idle-delay 0.05
+          helm-candidate-number-limit 200
+          helm-M-x-requires-pattern 0
+          helm-move-to-line-cycle-in-source t
+          ido-use-virtual-buffers t
+          helm-buffers-fuzzy-matching t
+          helm-split-window-default-side 'other
+          helm-split-window-in-side-p t
+          helm-ff-search-library-in-sexp t)
+    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+    (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+    (define-key helm-map (kbd "C-z") 'helm-select-action)
     (helm-mode 1)                            ;; All commands using completing-read (and what else?)
   )
 #+end_src
+
 ** Ad 6. Guaranteed response-time
 I haven't found a solution for this yet, but also have not found it to be a problem that needs solving in practice so far.
 
@@ -2699,6 +2626,7 @@ In my browser I use vimium to jump to links with the keyboard. In emacs =avy= do
     :bind (("s-j" . 'avy-goto-char)))
 #+end_src
 In a more general sense, =evil-mode=, the VI emulation layer on top of emacs, is the ultimate navigational package. I have tried this for about 6 months, but it's not for me (yet).
+
 * Remote editing
 As my default shell is =zsh= tramp does not work out of the box for me. It gets confused by my prompt, so on top of my =.zshrc= file I have the following line:
 
@@ -3411,6 +3339,7 @@ Elfeed allows to interactively subscribe to a feed (defaulting to what is in the
     (setq rmh-elfeed-org-files (list (concat elfeed-db-directory "feeds.org")))
     (elfeed-org))
 #+end_src
+
 ** IRC
 
 I used to run a weechat relay on a vps for IRC. The main reason for this was that the relay allowed multiple clients to be active at the same time an have at least an attempt at saving the state betwee multiple devices.
@@ -3723,6 +3652,7 @@ Not often, but increasingly so, reference books are in epub format. So, for that
   (use-package nov
     :mode ("\\.epub" . nov-mode))
 #+end_src
+
 ** Coding styles
 Different projects use different coding styles. The ones I need I'll gather here for now.
 
@@ -3750,6 +3680,14 @@ My personal style will be called =mrb= and basing it on the =linux= style.
     (editorconfig-mode 1))
 
 
+#+end_src
+
+** Emacs Lisp
+I've not done a lot of Emacs Lisp development, so I imagine this section might change frequently until I have a handle on which libraries and extensions to use.
+
+#+begin_src emacs-lisp
+  (use-package dash
+    :init (global-dash-fontify-mode))
 #+end_src
 
 ** Haskell
@@ -3792,6 +3730,7 @@ For creating web apps I use yesod, which is supported by a number of packages
   ;; Yesod's html like files
   (use-package hamlet-mode)
 #+end_src
+
 ** Go
 #+begin_src emacs-lisp
   (use-package go-mode
@@ -3807,10 +3746,12 @@ For creating web apps I use yesod, which is supported by a number of packages
       (add-hook 'before-save-hook #'lsp-organize-imports t t))
     (add-hook 'go-mode-hook #'lsp-go-install-save-hooks))
 #+end_src
+
 ** Rust
 #+begin_src emacs-lisp
 (use-package rust-mode)
 #+end_src
+
 ** Lisp-like
 There are a number of languages which are lisp-like, not in the least Emacs lisp itself. It makes sense to group the configuration for these languages together. In the first part there will be configuration for all lisp-like languages (like the =paredit= configuration for example). For each specific implementation there may be augmentations to the config, or even a completely separate.
 
@@ -3852,6 +3793,7 @@ Evaluating an expression with the cursor after it is often used, I'd like being 
 #+end_src
 
 Not sure how to bind this though. I'd like it close to C-x C-e obviously
+
 *** Scheme
 [[https://www.nongnu.org/geiser][Geiser]] is, among other things, a repl for schemes. I try to use one, mostly for educational purposes. I chose guile because it also claims to support =emacs-lisp= and might be the future vm on which emacs-lisp will run. So, let's have it and use paredit in its REPL.
 
@@ -3894,6 +3836,7 @@ While we're in the scheme section, let's configure =guix= and friend, which use 
       (yas-global-mode 1))
     )
 #+end_src
+
 *** Common lisp
 The defacto standard for a development environment in Emacs for common-lisp is either the =slime= or =sly= package. The latter seems a bit more modern and easier to configure, so trying that one
 
@@ -3926,8 +3869,38 @@ The defacto standard for a development environment in Emacs for common-lisp is e
                . lisp-font-lock-syntactic-face-function))))
 
     :config
+    (defun mrb/find-cmucl-binaries (path regex)
+      "find the CMUCL binaries stored in path"
+      (directory-files-recursively path regex nil
+                                   'file-executable-p t))
+
+    (defun mrb/determine-cmucl-version (binary version-params)
+      "invoke binary with version-params to retrieve version string"
+      (with-temp-buffer
+        (let* ((invocation-return-value
+                (call-process-shell-command binary nil (current-buffer)
+                                            t version-params))
+               (invocation-result
+                (car (split-string-and-unquote (buffer-string)))))
+          invocation-result)))
+
+    (setq cmucl-path "/opt/cmucl"
+          cmucl-binary-regex "^lisp$"
+          cmucl-version-params "-quiet -eval \"(prin1 (lisp:lisp-implementation-version)) (quit)\"")
+
+    (setq cmucl-binaries (mrb/find-cmucl-binaries
+                          cmucl-path cmucl-binary-regex))
+
+    (setq cmucl-version-alist
+          (mapcar (lambda (binary)
+                    (cons
+                     (mrb/determine-cmucl-version binary
+                                                  cmucl-version-params)
+                     binary))
+                  cmucl-binaries))
+
     (setq inferior-lisp-program "/usr/bin/sbcl"
-          sly-lisp-implementations '((sbcl ("sbcl" "--core" "/home/mrb/.sbcl/sbcl.core-for-sly")))
+          sly-lisp-implementations '((sbcl ("sbcl")))
           sly-net-coding-system 'utf-8-unix)
 
     ;; Nyxt exposes a repl we can use
@@ -3969,6 +3942,7 @@ Using =define-generic-mode= is more than enough to define something useful for m
       nil
       "Mode for marlin g-code files.")
 #+end_src
+
 ** Openscad
 Openscad is a script based 3d parametric drawing program. Obviously I'm editing those scripts in emacs.
 
@@ -3977,6 +3951,7 @@ Openscad is a script based 3d parametric drawing program. Obviously I'm editing 
     :config
     (setq scad-keywords '("return" "true" "false" "include")))
 #+end_src
+
 ** SQL
 SQL has a number of different dialects I use, depending on the database software in use.
 
@@ -3984,6 +3959,7 @@ SQL has a number of different dialects I use, depending on the database software
   (setq sql-server "dbserver.hsdev.com"
         sql-postgres-options '("-P" "pager=off" "-p 5434"))
 #+end_src
+
 ** GIT integration
 A common factor in all my development is the use of git. For emacs this automatically means Magit. I've used eshell in the past but that config didn't work out.
 
@@ -4054,6 +4030,7 @@ I am considering using a generic hook again to enable the method and either usin
   (use-package git-auto-commit-mode
     :diminish "Auto-committed")
 #+end_src
+
 *** Miscellaneous
 A collection of loosely development related things.
 
@@ -4109,6 +4086,5 @@ When we are all done with this, provide it.
 #+end_src
 
 # Local Variables:
-# writefreely-post-id: "wf83bq5jwz"
-# writefreely-post-token: nil
+# eval: (setq last_updated (progn (org-babel-goto-named-src-block "last_updated") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # End:
