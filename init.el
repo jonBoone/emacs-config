@@ -24,10 +24,6 @@
             "*not* ")
           "available"))
 
-;; My org file is posted using writefreely, which uses local variables, we need them right away
-(add-to-list 'safe-local-variable-values '(writefreely-post-id . "wf83bq5jwz"))
-(add-to-list 'safe-local-variable-values '(writefreely-post-token . nil))
-
 ;; Assuming file-name-concat exists, which is 28.1 emacs?
 (setq config-file (concat user-emacs-directory "mrb.org"))
 ;; This produces mrb.el which is then loaded. It checks datetime before tangling.
