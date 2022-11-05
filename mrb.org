@@ -3413,7 +3413,7 @@ I'm using elpy for python IDE functionality.
       (elpy-rpc-virtualenv-path 'current)
       (elpy-shell-display-buffer-after-send t)
       (python-shell-interpreter "ipython3")
-      (python-shell-interpreter-args "-i --simple-prompt -c \"autoreload 2\"")
+      (python-shell-interpreter-args "-i --simple-prompt -c \"autoreload\"")
       (elpy-rpc-python-command "python3")
       (python-shell-prompt-regexp "In \\[[0-9]+\\]: ")
       (python-shell-prompt-block-regexp "\\.\\.\\.\\.: ")
@@ -3495,22 +3495,24 @@ flycheck, pylint, and flake8
 pydoc formatter
 
 #+begin_src emacs-lisp
-    (use-package py-docformatter
-      :hook
-      (python-mode . py-docformatter-enable-on-save)
-      :config
-      (setq py-docformatter-options '("--wrap-summaries=88" "--pre-summary-newline")))
+  (use-package pydoc)
+
+  ;;(use-package py-docformatter
+  ;;  :hook
+  ;;  (python-mode . py-docformatter-enable-on-save)
+  ;;  :config
+  ;;  (setq py-docformatter-options '("--wrap-summaries=88" "--pre-summary-newline")))
 #+end_src
 
-pyment (for numpy docstring style) and normal python docstring style
+# pyment (for numpy docstring style) and normal python docstring style
 
 #+begin_src emacs-lisp
-  (use-package py-pyment
-    :config
-    (setq py-pyment-options '("--output=numpydoc")))
+;;  (use-package py-pyment
+;;    :config
+;;    (setq py-pyment-options '("--output=numpydoc")))
 
-  (use-package python-docstring
-    :hook (python-mode . python-docstring-mode))
+;;  (use-package python-docstring
+;;    :hook (python-mode . python-docstring-mode))
 #+end_src
 
   DAP mode is used for python debugging.
