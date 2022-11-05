@@ -2,6 +2,7 @@
 #+TITLE: My org-babel based emacs configuration
 #+SUBTITLE: derived from [[https://github.com/mrvdb/emacs-config][Marcel van der Boom's Emacs Config]]
 #+SUBTITLE: with additions from [[http://www.eastpyne.org/Emacs/fsem.html][Rob Rix's Hardcore Freestyle Emacs config]]
+#+SUBTITLE: and further inspiration from[[https://github.com/lccambiaghi/vanilla-emacs][Luca Cambiaghi's Vanilla Emacs literate config]]
 #+LANGUAGE: en
 #+OPTIONS:  H:5 toc:nil creator:nil email:nil author:t timestamp:t tags:nil tex:verbatim
 #+PROPERTY: header-args :results silent :noweb no-export
@@ -248,9 +249,9 @@ Seems like a good idea to start configuration with some details about me. The id
 
 #+begin_src emacs-lisp
   (setq mrb/default-email-address "ipmonger@delamancha.org"
-        mrb/default-signature-file "~/Maildir/.signature"
-        mrb/private-addresses '("marcel@van-der-boom.nl" "m@rcel.van-der-boom.nl")
-        mrb/private-signature-file "~/Maildir/.signature-private"
+        mrb/default-signature-file "~/.signatures/ipmonger%40delamancha.org"
+        mrb/private-addresses '("iain@alumni.cmu.edu" "ipmonger@gmail.com" "ipmonger@icloud.com" "reagent@elegant-software.io")
+        mrb/private-signature-file "~/.signatures/.signature-private"
         mrb/default-private-address (car mrb/private-addresses)
 
         mrb/bcc-address      "ipmonger@delamancha.org"
@@ -393,7 +394,7 @@ Finally, I want to prevent producing files which have trailing spaces, because t
           (bounds (bounds-of-thing-at-point 'url)))
       (kill-region (car bounds) (cdr bounds))
 
-      ; Leave url as is, unless mode has specific link syntax
+      ;; Leave url as is, unless mode has specific link syntax
       (insert (format (cond ((eq major-mode 'org-mode)      "[[%1s][%2s]]")
                             ((eq major-mode 'markdown-mode) "[[%2s][%1s]]")
                             (t "%1s"))
@@ -432,8 +433,8 @@ Using pdf-tools for PDF handling. This is a lot better than docview. I'm a bit a
 
     :config
     ;; TODO uncommenting the next line helps when rebuilding faild
-    ;(setq pdf-info-epdfinfo-program
-    ;      (expand-file-name "server/epdfinfo" (straight--repos-dir "pdf-tools")))
+    (setq pdf-info-epdfinfo-program
+          (expand-file-name "server/epdfinfo" (straight--repos-dir "pdf-tools")))
     (pdf-tools-install :no-query) ; :no-query auto builds epfinfo when needed
     (require 'pdf-annot)
 
@@ -723,7 +724,7 @@ To help me see the difference between visual lines and logical lines I let emacs
 #+begin_src emacs-lisp
   ;; Set some defaults
   (setq-default word-wrap t               ; why would i want to have no wrapping by word?
-                fill-column 80
+                fill-column 100
                 truncate-lines nil)
 
   (use-package visual-fill-column
@@ -2385,24 +2386,8 @@ Now use those bindings to configure both orgmode and org-journal-mode.
                  <<org-emphasis-binds>> )
 #+end_src
 
-During mail composition, when deleting text, this should be replace by '[...]' to signal that we removed text from the original mail.
-
-#+name: mu4e-compose-mode-selected
-#+begin_src emacs-lisp :tangle no
-  :init
-  (setq selected-mu4e-compose-mode-map (make-sparse-keymap))
-
-  ;; Signal a deletion in compose
-  ;; FIXME: do something clever with the quote level?
-  (defun mrb/compose-deletion ()
-    (interactive)
-    (delete-active-region)
-    (insert "[...]"))
-
-  :bind (:map selected-mu4e-compose-mode-map
-              ("." . mrb/compose-deletion))
-#+end_src
 ** Other key and mouse related settings
+
 Emacs has, like for everything else, a peculiar idea on scrolling and moving from screen to screen.
 
 These settings work better for me.
@@ -2427,13 +2412,13 @@ Make sure that the scroll wheel scrolls the window that the mouse pointer is ove
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
   (setq focus-follows-mouse t) ;; i3wm changes focus automatically
 #+end_src
+
 * Terminals, Character encodings and emulation
 My policy is to use Emacs for as many things and use as little other programs as necessary. All this within reason obviously.
 
 This sections describes how terminals and shells are used from within Emacs. In an ideal situation I won't be needing any other terminal emulator program, other than the ones used directly from Emacs.
 
 ** vterm
-While eshell is the more emacsy solution, it has some limitations which makes me reach for xterm for daily work. However, there's still a good option to benefit from all the emacs configuration in that case and that is the =vterm= package. This is an interface to the =libvterm= library creating a real terminal emulation using emacs for display.
 
 The basic install is easy, but does need an emacs compiled with module support.
 
@@ -2464,6 +2449,7 @@ Sometimes processes get stuck and i want a way to delete those processes easily.
                                       (mapcar 'process-name (process-list)))))
       (delete-process (get-process pname))))
 #+end_src
+
 * Completion
 
 There are 2 types of completion:
@@ -2480,7 +2466,9 @@ I want completion to work as follows:
 6. Completion should behave somewhat like real-time systems. An answer *must* be produced within a certain amount of time. If a completion answer takes longer than the amount of type to type it in full, the system has collapsed, so the time needs to be in the order of one third of the typing time.
 
 The next sections deal with the above requirements
+
 ** Ad 1. Bind completion always involves TAB-key
+
 The package =smart-tab= seems to fit this bill, but the thing that I care about can be achieved fine without it (I only found this out after considerable time using smart-tab).
 
 So, tab tries to indent, which is the main expectation, and if it can't it tries to complete stuff.
@@ -2499,8 +2487,11 @@ This is probably incomplete or wrong even in some cases, but it's a start.
 This way, TAB always does completion or indent, unless company-mode is not active.
 
 ** Ad 2. Completion should always produce something
+
 Not sure if there is anything to do here.
+
 ** Ad 3. Inline completion when possible
+
 With inline completion I mean without opening a whole new **Completions** window if not needed.
 
 Content that I want:
@@ -2555,9 +2546,11 @@ Having the completion pop up automatically is annoying in most cases, so I disab
 #+end_src
 
 ** Ad 4. Mode specialization
+
 There's always exceptions to the rule; with Emacs doubly so. Here's the relevant exceptions for my configuration.
 
 ** Ad 5. Open completion window predictably
+
 If there is a need to open a **Completions** window, let's at least do it predictably, so I know what and where to expect it.  The =popwin= package make this behavior a bit more predictable by showing it in the same place and making sure I can get rid of it easily.
 
 As popwin is a dependency of which-key, we already have it.
@@ -2603,6 +2596,7 @@ For most of the completion that is needed which is not inline (for which I am us
 #+end_src
 
 ** Ad 6. Guaranteed response-time
+
 I haven't found a solution for this yet, but also have not found it to be a problem that needs solving in practice so far.
 
 * Editing control
@@ -2616,6 +2610,7 @@ The multiple cursors package is often used for repetitive editing.
 #+end_src
 
 ** Navigation
+
 Navigating pieces of text effectively is probably the best optimization to make in the emacs configuration.
 
 In my browser I use vimium to jump to links with the keyboard. In emacs =avy= does something similar. On pressing the hotkey, all matches of the first char typed are highlighted (frame wide) by a single character. By pressing that character the cursor is place there directly. This makes =within-frame= navigation a 3-key operation, which is considerably faster than anything else.
@@ -2625,9 +2620,9 @@ In my browser I use vimium to jump to links with the keyboard. In emacs =avy= do
   (use-package avy
     :bind (("s-j" . 'avy-goto-char)))
 #+end_src
-In a more general sense, =evil-mode=, the VI emulation layer on top of emacs, is the ultimate navigational package. I have tried this for about 6 months, but it's not for me (yet).
 
 * Remote editing
+
 As my default shell is =zsh= tramp does not work out of the box for me. It gets confused by my prompt, so on top of my =.zshrc= file I have the following line:
 
 #+begin_src sh
@@ -2651,7 +2646,9 @@ Once that is in place files can be opened with =/ssh:/host:/path/to/file= syntax
                      (list ".*" "locale" "LC_ALL=C")))
 
 #+end_src
+
 * Browser integration
+
 My default browser, as set in the OS, should be started automatically on opening =http:= like stuff and =html= files. The only link to the /outside world/ is specifying that =xdg-open= should figure out what program to use.
 
 #+begin_src emacs-lisp
@@ -2731,537 +2728,9 @@ The package as is, is already useful for searching locations and storing links t
           osm-home '(51.6441759 4.4377029 17)
           osm-copyright nil))
 #+end_src
+
 * Messaging and chatting
-** Mail
-This section describes a search for the mail setup I want in Emacs. There are a few mail related packages and I'm unsure at what I want to use; reading the feature list doesn't cut it.  So, I'm having a setup where multiple mail handling packages may exist and hopefully one will float to the top as being *the one*
 
-*** Composing mail
-Composing mail is often an /out of band/ activity, like creating a tweet or a capture, so I would like to have roughly the same behavior. This is by default provided by compose-mail-other-frame, which in turn calls the right mua to do the job. Oddly enough, it is still required to have =mu4e-compose-in-new-frame= set to actually have another frame, so I'm writing it with mu4e-compose directly.
-
-#+name: mu4e-composeconfig
-#+begin_src emacs-lisp :tangle no
-  ;; Keybindings for active regions
-  <<mu4e-compose-mode-selected>>
-
-  :bind ("C-x m" . 'mrb/compose-mail)
-
-  :config
-  (setq mu4e-compose-format-flowed t
-        mu4e-compose-in-new-frame t
-        mu4e-compose-dont-reply-to-self t
-        mu4e-compose-signature '(with-current-buffer
-                                    (find-file-noselect message-signature-file)
-                                  (buffer-string))
-        mu4e-compose-complete-only-after nil ; no limit on contact completion for now
-        mail-signature t  ; use mail-signature file (move to message section?)
-        )
-
-  (defun mrb/compose-mail (&optional mailto-url)
-    "Run mail-compose, use mailto URI if it is given."
-    (interactive)
-
-    ;; If we have a mailto argument, parse and use it
-    (if (and (stringp mailto-url)
-             (string-match "\\`mailto:" mailto-url))
-        (browse-url-mail mailto-url)
-      ;; No mailto, argument, just run the mua
-      (mu4e-compose-new)))
-
-  (defun mrb/mailfile()
-    "Compose mail message from current buffer file, typically a pdf is viewed for my use-case"
-    (interactive)
-    (let* ((file (buffer-file-name))
-           (mimetype (mm-default-file-type file)))
-      (mu4e-compose-new)
-      (mml-attach-file file mimetype (concat mimetype " attachment") "attachment")))
-
-  ;; Extend attaching files with extra info insertion
-  <<extend-attach>>
-#+end_src
-
-To be able to use the =mrb/compose-mail= function as a mailto handler we need to be able to call it from outside of emacs. Let's define a small shell script that does exactly this. The SRC attributes tangle it into my =bin= directory where is will be in the path. In the OS, this script will need to be set as the default mail handler.
-
-#+begin_src sh :exports code :tangle ~/bin/mailto-handler :shebang #!/bin/bash
-  # Emacs mailto URI handler
-
-  # Make sure mailto: is always prepended to $1
-  mailto="mailto:${1#mailto:}"
-  mailto=$(printf '%s\n' "$mailto" | sed -e 's/[\"]/\\&/g')
-
-  # Call the elisp function handling our mailto URI
-  elisp_expr="(mrb/compose-mail \"$mailto\")"
-
-  # Do not create new frame, because mu4e does that already
-  # which is a simpler solution in this case
-  edit-noframe --eval "$elisp_expr"
-#+end_src
-
-On top of that, I want a manual capture script which is basically the same as the mailto handler.
-#+begin_src sh :exports code :tangle ~/bin/capture-mail.sh :shebang #!/bin/sh
-edit -e '(mrb/compose-mail)'
-#+end_src
-
-When attaching files, it is sometimes useful to extract some info from the attached file and include it in the message. My main usecase is extracting PDF annotations (mostly for people who cannot process the annotations in their PDF viewer directly.
-
-The way I have implemented this is by advicing the function =mml-insert-empty-tag= which is used by the =mml-attach-file= function. At that point in the code the file and point in the active buffer are known, and we just have to process the extra actions.
-The advice function extracts the annotations from the pdf file (unconditionally at the moment) and inserts a rendering of them just before inserting the attachment itself.
-
-#+name: extend-attach
-#+begin_src emacs-lisp :tangle no
-  ;; FIXME: return info, do not use insert directly, so we have more control
-  (defun mrb/pdf-extract-info (file)
-    "Extract and render the pdf annotations in FILE"
-    (mapc
-     (lambda (annot) ;; traverse all annotations
-       (progn
-         (let ((page (cdr (assoc 'page annot)))
-               (highlighted-text
-                (if (pdf-annot-get annot 'markup-edges)
-                    (let ((highlighted-text
-                           (pdf-info-gettext (pdf-annot-get annot 'page)
-                                             (pdf-tools-org-edges-to-region
-                                              (pdf-annot-get annot 'markup-edges))
-                                             t
-                                             file)))
-                      (replace-regexp-in-string "\n" " " highlighted-text))
-                  nil))
-               (note (pdf-annot-get annot 'contents))
-               (type (pdf-annot-get annot 'type))) ; underline, strike-through etc.
-           ;; Stuff gathered, start rendering
-           (when (or highlighted-text (> (length note) 0))
-             (insert (format "\n- page %s" page))
-
-             (when highlighted-text
-               (insert (format ": “%s”\n" highlighted-text)))
-
-             (if (> (length note) 0)
-                 (insert (format "\n  %s\n" note))
-               (insert "\n" ))))))
-     (cl-remove-if                          ; don't process links?
-      (lambda (annot) (member (pdf-annot-get-type annot) (list 'link)))
-      (pdf-info-getannots nil  (expand-file-name file)))))
-
-
-  (defun mrb/extended-attach-file (name &rest plist)
-    "Advice `:before `mml-insert-empty-tag to grab additional info from the attachment."
-    (let* ((file (plist-get plist 'filename))
-           (mimetype (if file (mm-default-file-type file) nil)))
-      (when (string= mimetype "application/pdf")
-        ;; Extract and render annotations
-        (mrb/pdf-extract-info file))))
-
-  (advice-add
-   'mml-insert-empty-tag                  ; a lot easier because we already know the file
-   :before
-   'mrb/extended-attach-file
-   '((name . "extended-attach")))
-#+end_src
-*** Sending mail
-Sending mail through smtp, using the smtpmail package
-
-#+begin_src emacs-lisp
-  (use-package smtpmail
-     :init
-     (setq smtpmail-default-smtp-server "localhost"
-           smtpmail-service 25)
-     :config
-     (setq
-      smtpmail-local-domain user-domain
-      smtpmail-sendto-domain user-domain
-      ;; User agent style is message mode by default, specific mail packages may override this
-      mail-user-agent 'message-user-agent
-      send-mail-function 'smtpmail-send-it ;This is for mail-mode
-      message-send-mail-function 'message-smtpmail-send-it) ; This is for message-mode
-
-     (setq password-cache t)            ; default is true, so no need to set this actually
-     (setq password-cache-expiry 28800)) ; default is 16 seconds, which is ridiculously low
-#+end_src
-
-At times we want to send signed and/or encrypted mail
-
-#+begin_src emacs-lisp
-  (use-package mml-sec
-    :straight (:type built-in)
-    :config
-    ;; Use my key to sign messages and make it safe if other keys exist
-    (add-to-list 'mml-secure-openpgp-signers user-gpg-encrypt-key)
-    (setq mml-secure-key-preferences
-          '((OpenPGP
-             (sign)
-             (encrypt
-              (user-mail-address user-gpg-encrypt-key)))
-            (CMS
-             (sign)
-             (encrypt))))
-
-          ;; Add my bcc address to list of safe addresses in bcc for secure message
-          (add-to-list 'mml-secure-safe-bcc-list mrb/bcc-address)
-
-          ;; Always encrypt to self, so I can read my own messages
-          (setq mml-secure-openpgp-encrypt-to-self `(,user-gpg-encrypt-key)))
-#+end_src
-
-*** Generic mail message settings
-It's not entirely clear which package is exactly responsible for what, but there are a few settings which are related to the =message= package
-
-#+begin_src emacs-lisp
-  (use-package message
-    :demand t ; mu4e won't load otherwise
-    :straight (:type built-in)
-
-    :init
-    (defun mrb/message-mode-hook ()
-      "This configures message mode and thus other modes which inherit message mode."
-      ;; We have to make sure that the messages we produce are
-      ;; format=flowed compatible. This happens on encoding when sending
-      ;; it. However, during compose we need to make sure that what we
-      ;; offer to encode is suitable for it.
-
-      ;; Let's do the compose part first No reflowing is possible without
-      ;; having hard newlines, so lets always enable those
-      (use-hard-newlines t 'always)
-
-      ;; Use visual line mode and visually break at word boundaries which
-      ;; is the same as the email encoding on send (see below)
-      (visual-line-mode 1)
-      (auto-fill-mode 0)                    ; Makes no sense in visual mode
-
-      (setq visual-fill-column-width nil)       ; Make sure `fill-column gets used
-      (setq fill-column 80)                 ; Not the same as encode column below!
-      (visual-fill-column-mode 1)           ; Show it
-
-      ;; Next, do the encoding and sending part
-      ;; Set the fill column on encoding (send)
-      ;; Q: where does the 66 come from, surely it could be a little bit more?
-      (setq fill-flowed-encode-column 66)
-
-      ;; This enables the f=f encoding
-      (setq mml-enable-flowed t))
-
-    :hook (message-mode . mrb/message-mode-hook)
-
-    :config
-    (setq
-     ;; When citing, remove the senders signature.
-     ;; FIXME: often I want to remove a lot more, like the disclaimer
-     message-cite-function 'message-cite-original-without-signature
-
-     ;; Citing/Quoting when replying
-     message-yank-prefix "> "             ; Add '> ' when quoting lines
-     message-yank-cited-prefix ">"        ; Add '>' for cited lines
-     message-yank-empty-prefix ""         ; Add nothing for empty lines
-
-     ;; Always put one in the Sent folder on sending.
-     ;; FIXME: this does nothing for mu4e!!!
-     message-default-mail-headers (mapconcat
-                                   'identity
-                                   `(,(concat "Bcc: " mrb/bcc-address)
-                                     "OpenPGP: id=235E5C8CF5E8DFFB"
-                                     "OpenPGP: url=https://keys.openpgp.org/vks/v1/by-fingerprint/77DDA1B68D04792A8F85D855235E5C8CF5E8DFFB"
-                                     "OpenPGP: preference=signencrypt")
-                                   "\n")
-
-
-     ;; How to attribute
-     message-citation-line-format "[%N]:"
-     message-citation-line-function 'message-insert-formatted-citation-line
-
-     message-kill-buffer-on-exit t))
-#+end_src
-
-*** Mu4e specific settings
-After a journey with many different MUAs I seem to be settling on =mu4e=.
-
-#+begin_src emacs-lisp
-  ;; FIXME: check for system packages meson, g++, pkg-config,
-  ;;        cmake, libglib2.0-dev, libgmime3.0-dev, libxapian-dev, texinfo
-  ;; (names are debian package names)
-  (use-package mu4e
-    :straight (:type git :host github :repo "djcb/mu"
-                     :pre-build (("./autogen.sh") ("ninja" "-C" "build"))
-                     :files (:defaults "build/mu4e/*.el")
-                     :includes (mu4e-icalendar))
-
-    :custom (mu4e-mu-binary (expand-file-name "build/mu/mu" (straight--repos-dir "mu")))
-    :after (message fullframe selected)
-    :commands (mu4e mrb/compose-mail mrb/mailfile)
-    :hook (mu4e-view-mode . turn-on-visual-line-mode)
-
-    :bind (:map mu4e-search-minor-mode-map
-                ("/" . mu4e-search)
-                ("s" . nil)
-                ("e" . mu4e-search-edit))
-
-    ;; Configuration sections
-    <<mu4e-composeconfig>>
-    <<mu4e-main-config>>
-    <<mu4e-headers-config>>
-    <<mu4e-view-config>>
-    <<mu4e-packages>>
-
-    ;; FIXME: move these up
-    (defun mrb/setsigfile (ctxname)
-      (concat "~/Maildir/.signature-"
-              (downcase ctxname)))
-
-    (setq
-     ;; Override the default mail user agent with the mu4e specific one
-     mail-user-agent 'mu4e-user-agent
-     mu4e-sent-folder     "/Sent"
-     mu4e-drafts-folder   "/Drafts"
-     mu4e-trash-folder    "/Trash"
-     mu4e-attachment-dir  "~/Downloads"   ; Absolute folder here, not relative to Maildir!
-     mrb/mu4e-junk-folder "/Junk"         ; Added for my specific config
-     mrb/mu4e-archive-folder "/Archives"
-
-     ;; Refiling to /Archives/YYYY
-     mu4e-refile-folder (lambda (msg)
-                          (let ((archive_base (concat mrb/mu4e-archive-folder "/"))
-                                (msgyear (format-time-string "%Y" (mu4e-message-field msg :date))))
-                            (cond
-                             ;; Order: most specific to general, end with the 't' case
-                             ;; Archive messages per year if it has a date field (basically, always)
-                             (msgyear   (concat archive_base msgyear))
-                             ;; The default refile location
-                             (t  archive_base))))
-
-
-     mu4e-use-fancy-chars t
-     mu4e-get-mail-command "mbsync quick" ; Just get inbox and important stuff, not everything
-     mu4e-decryption-policy 'ask
-     mu4e-update-interval 120             ; we just index, no retrieve, so 2mins is fine
-
-     ;; Set completing function to standard, so helm works
-     mu4e-completing-read-function 'completing-read
-     mu4e-save-multiple-attachments-without-asking t
-
-     ;; Context definitions
-     ;; Goal 1. use global config, unless private address is used
-     ;; FIXME: Can we use the one that matched?
-     mu4e-context-policy 'pick-first            ; When nothing matches only!
-     mu4e-compose-context-policy 'nil     ; for compose, use current if nothing matches
-     mail-signature-file  mrb/default-signature-file
-
-
-     mu4e-contexts
-     `(,(let* ((ctxname "Default")
-               (sigfile (mrb/setsigfile ctxname)))
-          (make-mu4e-context
-           :name ctxname
-           ;; Use global config, but restore what was changed in other contexts
-           :vars `((user-mail-address      . ,mrb/default-email-address)
-                   (mail-signature-file    . ,sigfile)
-                   (mu4e-compose-signature . (with-current-buffer
-                                                 (find-file-noselect mail-signature-file)
-                                               (buffer-string))))))
-       ,(let* ((ctxname "Private")
-               (sigfile (mrb/setsigfile ctxname)))
-          (make-mu4e-context
-           :name "Private"
-           :match-func (lambda (msg)
-                         (when msg
-                           (mu4e-message-contact-field-matches
-                            msg `(:to :cc :from) mrb/private-addresses)))
-           :vars `((user-mail-address     . ,mrb/default-private-address)
-                   (mail-signature-file   . ,sigfile)
-                   (mu4e-compose-signature . (with-current-buffer
-                                                 (find-file-noselect mail-signature-file)
-                                               (buffer-string))))))
-       )
-     )
-
-    ;; Rendering of html mail is done with shr, but I prefer not to show it at all
-    (with-eval-after-load "mm-decode"
-      (add-to-list 'mm-discouraged-alternatives "text/html")
-      (add-to-list 'mm-discouraged-alternatives "text/richtext"))
-
-    (defun mrb/mu4e-shr2text (msg)
-      "Overridden mu4e-shr2text"
-      (mu4e~html2text-wrapper
-       (lambda ()
-         (let ((shr-inhibit-images nil)   ;
-               (shr-width nil)            ; Use whole window width for rendering
-               (shr-use-colors nil)       ; Don't use colors from html, they ugly
-               (shr-bullet "• "))               ; Original was "* "
-           (shr-render-region (point-min) (point-max)))) msg))
-
-    (setq mu4e-html2text-command 'mrb/mu4e-shr2text))
-#+end_src
-
-Regardless, I always want mu4e, so start it in the background
-
-#+begin_src emacs-lisp
-  (mu4e 'background)
-#+end_src
-
-**** Main screen
-When mu4e start, it always opens in its main screen, which contains the main operations, visible bookmarks.
-
-#+name: mu4e-main-config
-#+begin_src emacs-lisp :tangle no
-    :bind (:map mu4e-main-mode-map
-                ("q" . mrb/mu4e-quit) ; just close the menu
-                ("Q" . mu4e-quit)     ; really Quit
-                (";" . nil)           ; this was too easy to press by mistake
-                ("C-;" . mu4e-context-switch))
-    :init
-    ;; Claim the whole screen in mu4e main window
-    (defun mrb/mu4e-quit ()
-      (interactive)
-      (kill-buffer (current-buffer)))
-
-    (fullframe mu4e mrb/mu4e-quit)
-
-    :config
-    (setq mu4e-main-buffer-hide-personal-addresses t
-          mu4e-main-hide-fully-read nil
-          mu4e-confirm-quit nil
-
-          mu4e-bookmarks (list
-                          '(:name "Unread messages"
-                                  :query "flag:unread and not flag:trashed"
-                                  :key ?u)
-                          '(:name "INBOX"
-                                  :query "(flag:unread or flag:new or maildir:/INBOX) and not (flag:draft or flag:flagged or flag:deleted or maildir:/Trash or flag:trashed)"
-                                  :key ?i)
-                          '(:name "TODO list"
-                                  :query "flag:flagged and not flag:trashed"
-                                  :key ?+)
-                          '(:name "Today's messages"
-                                  :query "date:today..now"
-                                  :key ?d)
-                          '(:name "Trash"
-                                  :query "maildir:/Trash or flag:trashed"
-                                  :key ?t)
-                          '(:name "Junk"
-                                  :query "maildir:/Junk"
-                                  :key ?j)))
-#+end_src
-**** Header view
-The first view after searching is a list of mail headers. Set config vars for this view and define the visualisation of the marks. I need an extra action to mark mail as junk which, on processing, moves the marked messages to the junk folder
-
-#+name: mu4e-headers-config
-#+begin_src emacs-lisp :tangle no
-  :bind (:map mu4e-headers-mode-map
-              ("s" . mu4e-headers-mark-for-junk)
-              ("r" . mu4e-compose-reply)
-              ("R" . mu4e-headers-mark-for-refile)
-              ("SPC" . mu4e-headers-mark-for-something)
-              ("X" . (lambda () (interactive) (mu4e-mark-execute-all t))))
-  :config
-  (setq
-   mu4e-headers-include-related nil ; Use 'W' to toggle interactively
-   mu4e-headers-date-format "%F"  ; ISO format yyyy-mm-dd
-   mu4e-headers-results-limit -1  ; For now, needed to have related search results
-   mu4e-headers-visible-lines 20  ; Default of 10 is a bit small
-   mu4e-headers-auto-update nil   ; Prevent confusion
-
-   ;; Make header configuration explicit
-   mu4e-headers-fields '((:flags . 6)
-                         (:human-date . 12)
-                         (:mailing-list . 10)
-                         (:from . 22)
-                         (:subject . nil))
-
-   ;; Define marks, possibly redundant, but I'd like to see them here.
-   mu4e-use-fancy-chars t
-   mu4e-headers-attach-mark    '("a" . "📎 ")
-   mu4e-headers-calendar-mark  '("c" . "📅")
-   mu4e-headers-draft-mark     '("D" . "🚧 ")
-   mu4e-headers-encrypted-mark '("x" . "🔑 ")
-   mu4e-headers-flagged-mark   '("F" . "🚩 ")
-   mu4e-headers-list-mark      '("s" . "🔈")
-   mu4e-headers-new-mark       '("N" . "✨ ")
-   mu4e-headers-passed-mark    '("P" . "↪ ")
-   mu4e-headers-personal-mark  '("p" . "👨")
-   mu4e-headers-replied-mark   '("R" . "↩ ")
-   mu4e-headers-seen-mark      '("S" . " ")
-   mu4e-headers-signed-mark    '("s" . "🖊 ")
-   mu4e-headers-trashed-mark   '("T" . "🗑️")
-   mu4e-headers-unread-mark    '("u" . "📩 ")
-   )
-  ;; Add one specifically for marking as junk
-  (add-to-list 'mu4e-marks
-               '(junk
-                 :char ("J" . "💀") :prompt "Mark as junk"
-                 :show-target (lambda (dyn-target) "Junk")
-                 :ask-target (lambda () mrb/mu4e-junk-folder)
-                 :action (lambda (docid msg target)
-                           (mu4e--server-move
-                            docid
-                            (mu4e--mark-check-target target) "+S-N-u"))))
-
-  ;; Let mu4e define functions for it
-  (mu4e~headers-defun-mark-for junk)
-  (mu4e~view-defun-mark-for junk)
-
-#+end_src
-
-**** Message view
-After selecting a message in the header view, a message view will open.
-
-#+name: mu4e-view-config
-#+begin_src emacs-lisp :tangle no
-  :bind (:map mu4e-view-mode-map
-              ("s" . mu4e-view-mark-for-junk)
-              ("r" . mu4e-compose-reply)
-              ("R" . mu4e-view-mark-for-refile)
-              ("X" . (lambda () (interactive) (mu4e~view-in-headers-context (mu4e-mark-execute-all t)))))
-
-  :config
-  (setq mu4e-view-use-old nil
-        mu4e-view-show-images t              ; This creates connections, possible privacy issue?
-        mu4e-view-image-max-width 800
-        mu4e-view-image-max-height 600
-        mu4e-view-show-addresses t)           ; Show actual addresses instead of names
-#+end_src
-**** Addon packages
-There are quite a few mu4e packages out there. Let's load them in one group for now, so it will be easy to /disable plugins/ if we need to.
-#+name: mu4e-packages
-#+begin_src emacs-lisp :tangle no
-  :config
-  ;; Show an alert when new mails come in, this relies on mu4e being active though
-  (use-package mu4e-alert
-    :hook (after-init . mu4e-alert-enable-notifications)
-    :config
-    ;; Just show subjects, not counts
-    (setq mu4e-alert-email-notification-types '(subjects))
-    (mu4e-alert-set-default-style 'libnotify))
-
-  ;; Support icalendar Yes/No/Maybe reactions to calendar invites
-  (use-package mu4e-icalendar
-    :config
-    (mu4e-icalendar-setup))
-
-  (use-package mu4e-query-fragments)  ; Support reusable query pieces '%junk' etc.
-  (use-package mu4e-jump-to-list)     ; Shortcut key 'l' to directly focus on list threads
-
-  ;; Patch highlighting inside messages
-  (use-package message-view-patch
-    :after (magit)
-    :hook (gnus-part-display . message-view-patch-highlight))
-
-  ;(use-package org-mu4e :after org)
-#+end_src
-
-*** Sieve
-Sieve is used on the server to filter our mail and this is accessed by the sieve-manage package. For some reason I can't get the '^M' characters out of the process, so here's a hack for that.
-
-#+begin_src emacs-lisp
-  (use-package sieve
-    :init
-    (defun dos2unix ()
-      "Replace DOS eolns CR LF with Unix eolns CR"
-      (interactive)
-      (goto-char (point-min))
-      (while (search-forward "\r" nil t) (replace-match "")))
-    :commands sieve-manage
-    :hook (sieve-mode . dos2unix)
-    :config
-    (setq sieve-manage-authenticators '(plain digest-md5 cram-md5 scram-md5 ntlm login)))
-#+end_src
-
-which basically goes over the whole sieve script and removes the '^M' characters from the buffer
 ** Elfeed
 Elfeed handles my RSS feeds, which I specify using an orgmode file =feeds.org=
 
@@ -3466,31 +2935,47 @@ For most of the languages I use (Bash, python, C, Go, HTML Haskell, Lua), the La
 
 #+begin_src emacs-lisp
   (use-package lsp-mode
-    :commands (lsp-deferred lsp)
-
-    :init
-    (use-package lsp-ui
-      :commands lsp-ui-mode)
-
-    ;; Enable lsp for languages I use
-    ;; TODO move these to their own blocks?
-    :hook (((c++-mode c-mode
-                      css-mode html-mode js2-mode
-                      python-mode
-                      sh-mode
-                      yaml-mode
-                      go-mode)  . lsp-deferred)
-           (lsp-mode . lsp-enable-which-key-integration))
-
-    :config
-    (setq lsp-enable-snippet nil
-          lsp-prefer-flymake nil
-          lsp-ui-doc-position 'bottom
-          read-process-output-max (* 1024 1024) ; As per https://emacs-lsp.github.io/lsp-mode/page/performance/
-          lsp-prefer-capf t
-          lsp-idle-delay 0.5              ; Tuning for frustration
-          )
-    )
+   :commands (lsp lsp-deferred)
+   :hook
+   (((c++-mode c-mode css-mode html-mode js2-mode python-mode sh-mode yaml-mode go-mode)
+    . lsp-deferred)
+    (lsp-mode . lsp-enable-which-key-integration))
+   :config
+   (setq lsp-restart 'ignore
+         lsp-enable-snippet nil
+         lsp-eldoc-enable-hover nil
+         lsp-enable-file-watchers nil
+         lsp-prefer-flymake nil
+         lsp-signature-auto-activate nil
+         lsp-modeline-diagnostics-enable nil
+         lsp-keep-workspace-alive nil
+         lsp-auto-execute-action nil
+         lsp-before-save-edits nil
+         lsp-headerline-breadcrumb-enable nil
+         lsp-diagnostics-provider :none
+         lsp-ui-doc-position 'bottom
+         read-process-output-max (* 1024 1024)
+         lsp-prefer-capf t
+         lsp-idle-delay 0.5)
+   :init
+   (use-package lsp-ui
+     :commands lsp-ui-mode
+     :hook ((lsp-mode . lsp-ui-mode)
+            (lsp-ui-peek-find-definitions))
+     :config
+     (lsp-ui-peek-mode-map
+      :states 'normal
+      "C-j" 'lsp-ui-peek--select-next
+      "C-k" 'lsp-ui-peek--select-prev)
+     (outline-mode-map
+      :states 'normal
+      "C-j" 'nil
+      "C-k" 'nil)
+     :init
+     (setq lsp-ui-doc-show-with-cursor nil
+           lsp-ui-doc-show-with-mouse nil
+           lsp-ui-peek-always-show t
+           lsp-ui-peek-fontify 'always)))
 #+end_src
 
 Make our source look a bit more attractive by enabling =prettify-symbol-mode= in all programming modes
@@ -3563,6 +3048,7 @@ Now that we have a tree, we can take advantage of that for folding, so let's con
 Ideally, the folding should be spread out over the major modes and have support for tree-sitter there automatically.
 
 ** Reference & documentation
+
 While emacs itself has a very nicely documentation system, I still don't understand why this is not interpolated into every other mode and or language.
 
 Example: =C-h-f= in lisp-mode describes the function to me. If I am in a python file, I want it to do exactly the same, but for the python function.  There's a page on emacs wiki dealing with this a bit: https://www.emacswiki.org/emacs/Context_sensitive_help
@@ -3581,6 +3067,7 @@ There's a package =ghelp= (/generic help/ I guess) which promises to do what I w
 Anyways, here's what I have configured related to reference information and documentation
 
 *** Context sensitive
+
 Regardless of (programming) language there's certain information that's needed on the spot. These are the function signatures, the specific syntax when typing Math symbols, orgmode oddities etc.
 
 I want that type of information directly at hand. One part of the solution is [[https://www.emacswiki.org/emacs/ElDoc][ElDoc]]. This shows documentation in the echo area for a language. ElDoc is built into Emacs so that's a good start. Let's enable it for the modes that have support for it.
@@ -3599,6 +3086,7 @@ I want that type of information directly at hand. One part of the solution is [[
 The location of the eldoc information in the message area is a bit far away from the editing point. I have looked at eldoc-overlay and others to resolve that, but haven't found a satisfying solution yet.
 
 *** Reference information
+
 If the inline documentation presented by ElDoc is not sufficient, I want a way to spawn reference documentation based on the context.
 
 The closest thing I found is =zeal= or =dash= which allow docsets to be searched. There is a GUI and helm-dash is an interface to the docsets for emacs. Typically I install docsets through the GUI or manually (the folder names are sometimes not the same when I use helm-dash to install docsets). This solution gives me at least /access/ to reference information for most of the programming languages I use. The direct access to the sources is missing, or I don't know how to do this yet.
@@ -3628,6 +3116,7 @@ Dash show documentation inside emacs, which is my preferred method. There are ti
 #+end_src
 
 *** RFC document reader
+
 I often need to consult RFC documents, so not having to leave emacs for that and be able to use all tools on RFC documents is very helpful.
 
 #+begin_src emacs-lisp
@@ -3639,6 +3128,7 @@ I often need to consult RFC documents, so not having to leave emacs for that and
 #+end_src
 
 *** Man pages
+
 There's a builtin package to read man pages, let's make it explicit.
 
 #+begin_src emacs-lisp
@@ -3646,6 +3136,7 @@ There's a builtin package to read man pages, let's make it explicit.
 #+end_src
 
 *** Epub documents
+
 Not often, but increasingly so, reference books are in epub format. So, for that we need a reader package. =nov= seems to be the best option
 
 #+begin_src emacs-lisp
@@ -3683,52 +3174,35 @@ My personal style will be called =mrb= and basing it on the =linux= style.
 #+end_src
 
 ** Emacs Lisp
-I've not done a lot of Emacs Lisp development, so I imagine this section might change frequently until I have a handle on which libraries and extensions to use.
+
+Using dash.el for enhanced list support in Emacs Lisp
 
 #+begin_src emacs-lisp
+  ;; dash.el provides an alternative API for lists in Elisp
+  ;; see https://github.com/magnars/dash.el
   (use-package dash
     :init (global-dash-fontify-mode))
 #+end_src
 
-** Haskell
-I am just starting out with haskell, but the two things that are probably needed in any case are a mode to use when editing Haskell source (*.hs files) and the ghc-mod package to help with completion and showing syntax errors.
-
+Using eros for overlays with results in line
 #+begin_src emacs-lisp
-  (use-package haskell-mode
-    :hook (;(haskell-mode . interactive-haskell) ;; Produces elc load error
-           (haskell-mode . turn-on-haskell-doc)
-           (haskell-mode . haskell-indentation-mode))
-
-    :mode "\‌\.hs\\'"
-    :config
-    ;; Replace ⇒ with ⇉
-    (delete '("=>" . "⇒") haskell-font-lock-symbols-alist)
-    (add-to-list 'haskell-font-lock-symbols-alist '("=>" . "⇉"))
-    (setq haskell-font-lock-symbols t
-          haskell-interactive-popup-errors nil
-          haskell-process-type 'stack-ghci))
+  (use-package eros
+    :hook ((emacs-lisp-mode org-mode lisp-interaction-mode) . eros-mode)
+    :init
+    (defun eros-eval-region (start end)
+      (interactive "r")
+      (eros--eval-overlay
+       (string-trim
+        (with-output-to-string
+          (eval-region start end standard-output)))
+       (max (point) (mark)))))
 #+end_src
 
-Enable the language server for haskell
-
+Also be aggressive about keeping the buffer indented
 #+begin_src emacs-lisp
-  (use-package lsp-haskell
-    :after (haskell-mode lsp-mode)
-    :hook ((haskell-mode  haskell-literate-mode) . lsp))
-#+end_src
-
-Because the haskell environment can be different for each project, we need a way to adjust to that for certain things. One such thing is flycheck which will give false-negatives when checking haskell files if the specific build environment is not taken into account. The package flycheck-haskell automatically adjusts flycheck.
-
-#+begin_src emacs-lisp
-  (use-package flycheck-haskell
-    :after flycheck
-    :hook (flycheck-mode . flycheck-haskell-setup))
-#+end_src
-
-For creating web apps I use yesod, which is supported by a number of packages
-#+begin_src emacs-lisp
-  ;; Yesod's html like files
-  (use-package hamlet-mode)
+  (use-package aggressive-indent
+    :hook ((clojure-mode . aggressive-indent-mode)
+           (emacs-lisp-mode . aggressive-indent-mode)))
 #+end_src
 
 ** Go
@@ -3745,11 +3219,6 @@ For creating web apps I use yesod, which is supported by a number of packages
       (add-hook 'before-save-hook #'lsp-format-buffer t t)
       (add-hook 'before-save-hook #'lsp-organize-imports t t))
     (add-hook 'go-mode-hook #'lsp-go-install-save-hooks))
-#+end_src
-
-** Rust
-#+begin_src emacs-lisp
-(use-package rust-mode)
 #+end_src
 
 ** Lisp-like
@@ -3841,118 +3310,276 @@ While we're in the scheme section, let's configure =guix= and friend, which use 
 The defacto standard for a development environment in Emacs for common-lisp is either the =slime= or =sly= package. The latter seems a bit more modern and easier to configure, so trying that one
 
 #+begin_src emacs-lisp
-  (use-package sly
-    :after (paredit)
-    :hook ((sly-mrepl-mode . override-sly-repl-bindings-with-paredit)
-           (sly-mrepl-mode . enable-paredit-mode)
-           (sly-mrepl-mode . sly-mrepl-font-lock-setup))
-    :commands (mrb/nyxt)
+    (use-package sly
+      :after (paredit)
+      :hook ((sly-mrepl-mode . override-sly-repl-bindings-with-paredit)
+             (sly-mrepl-mode . enable-paredit-mode)
+             (sly-mrepl-mode . sly-mrepl-font-lock-setup))
+      :commands (mrb/nyxt)
+      :init
+      ;; In the REPL sly takes backspace, I want paredit to have it
+      (defun override-sly-repl-bindings-with-paredit ()
+        (define-key sly-mrepl-mode-map
+          (read-kbd-macro paredit-backward-delete-key) nil))
+      ;; Copy the keywords from lisp mode
+      (defvar sly-mrepl-font-lock-keywords lisp-font-lock-keywords-2)
+
+      ;; Set them up
+      (setq sly-mrepl-font-lock-keywords
+            (cons '(sly-mrepl-font-lock-find-prompt
+                    . 'sly-mrepl-prompt-face)
+                  sly-mrepl-font-lock-keywords))
+      (defun sly-mrepl-font-lock-setup ()
+        (setq font-lock-defaults
+              '(sly-mrepl-font-lock-keywords
+                ;; From lisp-mode.el
+                nil nil (("+-*/.<>=!?$%_&~^:@" . "w")) nil
+                (font-lock-syntactic-face-function
+                 . lisp-font-lock-syntactic-face-function))))
+
+      :config
+      (defun mrb/determine-cmucl-version (binary version-params)
+        "invoke binary with version-params to retrieve version string"
+        (with-temp-buffer
+          (let* ((invocation-return-value
+                  (call-process-shell-command binary nil (current-buffer) t version-params))
+                 (invocation-result))
+            (car (split-string-and-unquote (buffer-string)))))
+        invocation-result)
+
+      (defun mrb/symbolize-version (implementation version)
+        "create a :keyword symbol bsed on the implementation name
+  and version strings"
+        (intern (concat ":"
+                        (concat implementation
+                                (replace-regexp-in-string
+                                 "[[:blank]]" "-" ; replace horizontal space with hyphens
+                                 (replace-regexp-in-string
+                                  "[{}]" "" ; remove parens
+                                  version))))))
+
+      (defun mrb/find-cmucl-binaries (path regex)
+        "find the CMUCL binaries stored in path"
+        (directory-files-recursively path regex nil
+                                     'file-executable-p t))
+
+      (setq cmucl-path "/opt/cmucl"
+            cmucl-binary-regex "^lisp$"
+            cmucl-version-params '-quiet -eval \"(prin1 (lisp-implementation-version)) (quit)\"'
+            cmucl-binaries (mrb/find-cmucl-binaries
+                            cmucl-path cmucl-binary-regex)
+
+            cmucl-versions
+            (mapcar (lambda (binary)
+                      (list (mrb/symbolize-version
+                             "cmucl"
+                             (mrb/determine-cmucl-version
+                              binary cmucl-version-params))
+                            (list binary)))
+                    cmucl-binaries))
+
+      ;; note: intentionally not setting inferior-lisp-program
+      ;; sly will try to autodetect a lisp implementation, unless
+      ;; invoked with a negative prefix argument (M-- M-x sly)
+      ;; in which case it will allow a list selection to be made
+      (setq sly-lisp-implementations (quote (cmucl-versions))
+            sly-net-coding-system 'utf-8-unix)
+
+      ;; Nyxt exposes a repl we can use
+      <<nyxt-sly-config>>
+
+      ;; Correct the REPL prompt
+      (defun sly-mrepl-font-lock-find-prompt (limit)
+        ;; Rough: (re-search-forward "^\\w*>" limit t)
+        (let (beg end)
+          (when (setq beg (text-property-any
+                           (point) limit 'sly-mrepl-prompt-face t))
+            (setq end (or (text-property-any
+                           beg limit 'sly-mrepl-prompt-face nil)
+                          limit))
+            (goto-char beg)
+            (set-match-data (list beg end))
+            t))))
+#+end_src
+
+** Python
+
+I'm using elpy for python IDE functionality.
+
+#+begin_src emacs-lisp
+  (use-package elpy
+      :straight t
+      :custom
+      (elpy-rpc-virtualenv-path 'current)
+      (elpy-shell-display-buffer-after-send t)
+      (python-shell-interpreter "ipython3")
+      (python-shell-interpreter-args "-i --simple-prompt -c \"autoreload 2\"")
+      (elpy-rpc-python-command "python3")
+      (python-shell-prompt-regexp "In \\[[0-9]+\\]: ")
+      (python-shell-prompt-block-regexp "\\.\\.\\.\\.: ")
+      (python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: ")
+      (python-shell-completion-setup-code
+       "from IPython.core.completerlib import module_completion")
+      (python-shell-completion-string-code
+       "';'.join(get_ipython().Completer.all_completions('''%s'''))\n")
+      :init
+      (advice-add 'python-mode :before 'elpy-enable)
+      :hook
+      ((elpy-mode . flycheck-mode)
+       (elpy-mode . (lambda ()
+                      (set (make-local-variable 'company-backends)
+                           '((elpy-company-backend :with company-yasnippet)))))
+       (elpy-mode . (lambda ()
+                      (electric-indent-local-mode -1)))
+       (elpy-mode . (lambda ()
+                      (elpy-shell-toggle-dedicated-shell 1))))
+      :config
+      (setenv "PYTHONBREAKPOINT" "ipdb.set_trace")
+      (setenv "WORKON_HOME" "~/anaconda3/envs")
+      (use-package pyvenv
+        :commands (pyvenv-activate)))
+#+end_src
+
+Setting up blacken for python formattting.
+
+#+begin_src emacs-lisp
+  (use-package blacken
+   :delight
+   :hook (python-mode . blacken-mode)
+   :custom (blacken-line-length 79))
+#+end_src
+
+py-isort for keeping imports in order
+
+#+begin_src emacs-lisp
+  (use-package py-isort
+    :after python
+    :hook ((python-mode . pyvenv-mode)
+           (before-save . py-isort-before-save)))
+#+end_src
+
+I'm using pyright (from MS) as the python LSP server.
+
+#+begin_src emacs-lisp
+  (use-package lsp-pyright
+    :if (executable-find "pyright")
+    :hook (python-mode . (lambda ()
+                           (require 'lsp-pyright)
+                           (lsp))))
+#+end_src
+
+Use pytest for test cases.
+
+#+begin_src emacs-lisp
+  (use-package python-pytest
     :init
-    ;; In the REPL sly takes backspace, I want paredit to have it
-    (defun override-sly-repl-bindings-with-paredit ()
-      (define-key sly-mrepl-mode-map
-        (read-kbd-macro paredit-backward-delete-key) nil))
-    ;; Copy the keywords from lisp mode
-    (defvar sly-mrepl-font-lock-keywords lisp-font-lock-keywords-2)
-
-    ;; Set them up
-    (setq sly-mrepl-font-lock-keywords
-          (cons '(sly-mrepl-font-lock-find-prompt
-                  . 'sly-mrepl-prompt-face)
-                sly-mrepl-font-lock-keywords))
-    (defun sly-mrepl-font-lock-setup ()
-      (setq font-lock-defaults
-            '(sly-mrepl-font-lock-keywords
-              ;; From lisp-mode.el
-              nil nil (("+-*/.<>=!?$%_&~^:@" . "w")) nil
-              (font-lock-syntactic-face-function
-               . lisp-font-lock-syntactic-face-function))))
-
-    :config
-    (defun mrb/find-cmucl-binaries (path regex)
-      "find the CMUCL binaries stored in path"
-      (directory-files-recursively path regex nil
-                                   'file-executable-p t))
-
-    (defun mrb/determine-cmucl-version (binary version-params)
-      "invoke binary with version-params to retrieve version string"
-      (with-temp-buffer
-        (let* ((invocation-return-value
-                (call-process-shell-command binary nil (current-buffer)
-                                            t version-params))
-               (invocation-result
-                (car (split-string-and-unquote (buffer-string)))))
-          invocation-result)))
-
-    (setq cmucl-path "/opt/cmucl"
-          cmucl-binary-regex "^lisp$"
-          cmucl-version-params "-quiet -eval \"(prin1 (lisp:lisp-implementation-version)) (quit)\"")
-
-    (setq cmucl-binaries (mrb/find-cmucl-binaries
-                          cmucl-path cmucl-binary-regex))
-
-    (setq cmucl-version-alist
-          (mapcar (lambda (binary)
-                    (cons
-                     (mrb/determine-cmucl-version binary
-                                                  cmucl-version-params)
-                     binary))
-                  cmucl-binaries))
-
-    (setq inferior-lisp-program "/usr/bin/sbcl"
-          sly-lisp-implementations '((sbcl ("sbcl")))
-          sly-net-coding-system 'utf-8-unix)
-
-    ;; Nyxt exposes a repl we can use
-    <<nyxt-sly-config>>
-
-    ;; Correct the REPL prompt
-    (defun sly-mrepl-font-lock-find-prompt (limit)
-      ;; Rough: (re-search-forward "^\\w*>" limit t)
-      (let (beg end)
-        (when (setq beg (text-property-any
-                         (point) limit 'sly-mrepl-prompt-face t))
-          (setq end (or (text-property-any
-                         beg limit 'sly-mrepl-prompt-face nil)
-                        limit))
-          (goto-char beg)
-          (set-match-data (list beg end))
-          t))))
+    (setq python-pytest-arguments '("--color" "--failed-first")))
 #+end_src
 
-** Gcode
-I'm not in the habit of editing gcode, but every now and then I need to look at it and I want it reasonably decent. My use-case is just sending gcode to my 3D-printer which runs Marlin firmware.
-
-Using =define-generic-mode= is more than enough to define something useful for me.
+flycheck, pylint, and flake8
 
 #+begin_src emacs-lisp
-    (use-package generic-x
-      :straight (:type built-in))
-
-    (define-generic-mode marlin-gcode-mode
-      '((";"))   ;; ; starts a comment
-      (apply 'append
-             (mapcar #'(lambda (s) (list (upcase s) (downcase s) (capitalize s)))
-                     '("keywords?" "exist?")))
-      '(("\\([GM]\\)[0-9]+" (1 font-lock-function-name-face))    ; code letters
-        ("\\([ABCDEFHIJKLNOPQRSTUVWXYZ]\\)[-]?[0-9]+" (1 font-lock-string-face)) ; parameter letters
-        ("\\([\-+]?[0-9]*\\.[0-9]+\\)" (1 font-lock-constant-face)) ; 9.9 type numbers
-        ("\\([\-+]?[0-9]+\\)" (1 font-lock-constant-face)))         ; 999 type numbers
-      '("\\.gcode\\'")
-      nil
-      "Mode for marlin g-code files.")
+  (use-package flycheck
+    :hook ((lsp-mode . flycheck-mode))
+    :config
+    (setq flycheck-python-pylint-executable (executable-find "python")
+          flycheck-checker 'python-pylint
+          flycheck-python-flake8-executable (executable-find "python")
+          flycheck-flake8rc ".flake8")
+    :init
+    (setq flycheck-indication-mode 'right-fringe)
+    ;; only check on save
+    (setq flycheck-check-syntax-automatically '(mode-enabled save)))
 #+end_src
 
-** Openscad
-Openscad is a script based 3d parametric drawing program. Obviously I'm editing those scripts in emacs.
+pydoc formatter
 
 #+begin_src emacs-lisp
-  (use-package scad-mode
+    (use-package py-docformatter
+      :hook
+      (python-mode . py-docformatter-enable-on-save)
+      :config
+      (setq py-docformatter-options '("--wrap-summaries=88" "--pre-summary-newline")))
+#+end_src
+
+pyment (for numpy docstring style) and normal python docstring style
+
+#+begin_src emacs-lisp
+  (use-package py-pyment
     :config
-    (setq scad-keywords '("return" "true" "false" "include")))
+    (setq py-pyment-options '("--output=numpydoc")))
+
+  (use-package python-docstring
+    :hook (python-mode . python-docstring-mode))
+#+end_src
+
+  DAP mode is used for python debugging.
+
+#+begin_src emacs-lisp
+    (use-package dap-mode
+      :hook
+      ((dap-mode . corfu-mode)
+       ;(dap-terminated . lc/hide-debug-windows)
+       (dap-session-created . (lambda (_arg)
+                                (projectile-save-project-buffers)))
+       (dap-ui-repl-mode . (lambda ()
+                             (setq-local truncate-lines t))))
+      :init
+      ;; prevent minibuffer prompt about reloading from disk
+      (setq revert-without-query '("~/tmp-inspect-df.csv"))
+      (setq dap-auto-configure-features '(sessions repl))
+      (setq dap-python-debugger 'debugpy)
+      (setq dap-auto-show-output t)
+      (setq dap-output-window-min-height 10)
+      (setq dap-output-window-max-height 200)
+      (setq dap-overlays-use-overlays nil)
+      :config
+      (dap-ui-repl-mode-map
+       :states '(insert)
+       "<up>" 'comint-previous-input)
+      (:keymaps 'dap-ui-repl-mode-map
+                "<backtab>" 'dabbrev-completion
+                "TAB" 'lc/py-indent-or-complete)
+      ;; configure windows
+      (require 'dap-ui)
+      (setq dap-ui-buffer-configurations
+            '(("*dap-ui-sessions*"
+               (side . bottom)
+               (slot . 1)
+               (window-height . 0.33))
+              ("*debug-window*"
+               (side . bottom)
+               (slot . 2)
+               (window-height . 0.33))
+              ("*dap-ui-repl*"
+               (side . bottom)
+               (slot . 3)
+               (window-height . 0.33))))
+      (dap-ui-mode 1)
+      ;; debug templates
+      (defvar dap-script-args (list :type "python"
+                                    :args []
+                                    :cwd "${workspaceFolder}"
+                                    :justMyCode :json-false
+                                    :request "launch"
+                                    :debugger 'debugpy
+                                    :name "dap-debug-script"))
+      (defvar dap-test-args (list :type "python-test-at-point"
+                                  :args ""
+                                  :justMyCode :json-false
+                                  ;; :cwd "${workspaceFolder}"
+                                  :request "launch"
+                                  :module "pytest"
+                                  :debugger 'debugpy
+                                  :name "dap-debug-test-at-point"))
+      (dap-register-debug-template "dap-debug-script" dap-script-args)
+      (dap-register-debug-template "dap-debug-test-at-point" dap-test-args)
+      (dap-register-debug-template "eco-cold-start" eco-cold-start)
+      (dap-mode t))
 #+end_src
 
 ** SQL
+
 SQL has a number of different dialects I use, depending on the database software in use.
 
 #+begin_src emacs-lisp
@@ -3961,9 +3588,11 @@ SQL has a number of different dialects I use, depending on the database software
 #+end_src
 
 ** GIT integration
+
 A common factor in all my development is the use of git. For emacs this automatically means Magit. I've used eshell in the past but that config didn't work out.
 
 *** Magit
+
 For most, if not all development work (and some other work too) I use git as the revision control system. In emacs that translates to using magit, so let's begin with bringing that in.
 
 Magit forge is a sub-module for magit which helps in managing repositories in forges (notably github and gitlab). This looks very promising, albeit slow.
@@ -4013,6 +3642,7 @@ Most of the magit work is done through its status screen and I would like to see
 #+end_src
 
 *** Committing automatically
+
 I have lost a number of changes in the past because I reverted a file, made a mistake or whatever. Some of these mistakes can be reverted easily if saves are automatically committed
 
 Rather than using an after save hook, there is a minor git-auto-commit mode package which does just what I need.
@@ -4032,9 +3662,11 @@ I am considering using a generic hook again to enable the method and either usin
 #+end_src
 
 *** Miscellaneous
+
 A collection of loosely development related things.
 
 **** Online pastebin services
+
 I use github gists sometimes, but rather have more open options as well. These are mostly use to communicate longer pieces of text in chat programs, notably IRC
 
 #+begin_src emacs-lisp
@@ -4046,6 +3678,7 @@ I use github gists sometimes, but rather have more open options as well. These a
 #+end_src
 
 **** Grepping files
+
 Searching for terms in files is a hard problem, but the vast majority of my use-cases can just be solved by searching for terms in the current project root, almost always defined by having a .git directory in a parent directory. So, let's start there and see what else I'll need.
 
 I've chosen =ag= as the engine for /grepping/ the files because it has a helm interface and it's very fast.
@@ -4066,6 +3699,7 @@ I've chosen =ag= as the engine for /grepping/ the files because it has a helm in
 #+end_src
 
 ** Ansible
+
 Not really a development setting, but closely related to it, as eventually the programs written need to be deployed. Most of the time, while deploying, ansible plays a role in this and it's now worth having a dedicated configuration for editing the YAML files for it.
 
 For now, just the ansible package, and some access to its documentation will suffice
@@ -4077,7 +3711,9 @@ For now, just the ansible package, and some access to its documentation will suf
       :hook (yaml-mode . ansible-doc-mode))
     :hook (yaml-mode . (lambda () (ansible 1))))
 #+end_src
+
 * Finale
+
 When we are all done with this, provide it.
 
 #+begin_src emacs-lisp
