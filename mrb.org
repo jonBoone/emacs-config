@@ -1974,7 +1974,6 @@ I use the /encrypt/ tag for encrypting sections in org-mode (and sometimes my jo
 
 #+begin_src emacs-lisp
   (use-package org-crypt
-
     :config
     (org-crypt-use-before-save-magic)
     (setq org-crypt-tag-matcher "encrypt")
@@ -2963,10 +2962,6 @@ For most of the languages I use (Bash, python, C, Go, HTML Haskell, Lua), the La
      :hook ((lsp-mode . lsp-ui-mode)
             (lsp-ui-peek-find-definitions))
      :config
-     (lsp-ui-peek-mode-map
-      :states 'normal
-      "C-j" 'lsp-ui-peek--select-next
-      "C-k" 'lsp-ui-peek--select-prev)
      (outline-mode-map
       :states 'normal
       "C-j" 'nil
@@ -3413,7 +3408,7 @@ I'm using elpy for python IDE functionality.
       (elpy-rpc-virtualenv-path 'current)
       (elpy-shell-display-buffer-after-send t)
       (python-shell-interpreter "ipython3")
-      (python-shell-interpreter-args "-i --simple-prompt -c \"autoreload\"")
+      (python-shell-interpreter-args "-i --simple-prompt")
       (elpy-rpc-python-command "python3")
       (python-shell-prompt-regexp "In \\[[0-9]+\\]: ")
       (python-shell-prompt-block-regexp "\\.\\.\\.\\.: ")
@@ -3518,66 +3513,26 @@ pydoc formatter
   DAP mode is used for python debugging.
 
 #+begin_src emacs-lisp
-    (use-package dap-mode
-      :hook
-      ((dap-mode . corfu-mode)
-       ;(dap-terminated . lc/hide-debug-windows)
-       (dap-session-created . (lambda (_arg)
-                                (projectile-save-project-buffers)))
-       (dap-ui-repl-mode . (lambda ()
-                             (setq-local truncate-lines t))))
-      :init
-      ;; prevent minibuffer prompt about reloading from disk
-      (setq revert-without-query '("~/tmp-inspect-df.csv"))
-      (setq dap-auto-configure-features '(sessions repl))
-      (setq dap-python-debugger 'debugpy)
-      (setq dap-auto-show-output t)
-      (setq dap-output-window-min-height 10)
-      (setq dap-output-window-max-height 200)
-      (setq dap-overlays-use-overlays nil)
-      :config
-      (dap-ui-repl-mode-map
-       :states '(insert)
-       "<up>" 'comint-previous-input)
-      (:keymaps 'dap-ui-repl-mode-map
-                "<backtab>" 'dabbrev-completion
-                "TAB" 'lc/py-indent-or-complete)
-      ;; configure windows
-      (require 'dap-ui)
-      (setq dap-ui-buffer-configurations
-            '(("*dap-ui-sessions*"
-               (side . bottom)
-               (slot . 1)
-               (window-height . 0.33))
-              ("*debug-window*"
-               (side . bottom)
-               (slot . 2)
-               (window-height . 0.33))
-              ("*dap-ui-repl*"
-               (side . bottom)
-               (slot . 3)
-               (window-height . 0.33))))
-      (dap-ui-mode 1)
-      ;; debug templates
-      (defvar dap-script-args (list :type "python"
-                                    :args []
-                                    :cwd "${workspaceFolder}"
-                                    :justMyCode :json-false
-                                    :request "launch"
-                                    :debugger 'debugpy
-                                    :name "dap-debug-script"))
-      (defvar dap-test-args (list :type "python-test-at-point"
-                                  :args ""
-                                  :justMyCode :json-false
-                                  ;; :cwd "${workspaceFolder}"
-                                  :request "launch"
-                                  :module "pytest"
-                                  :debugger 'debugpy
-                                  :name "dap-debug-test-at-point"))
-      (dap-register-debug-template "dap-debug-script" dap-script-args)
-      (dap-register-debug-template "dap-debug-test-at-point" dap-test-args)
-      (dap-register-debug-template "eco-cold-start" eco-cold-start)
-      (dap-mode t))
+  (use-package dap-mode
+    :after lsp-mode
+    :hook
+    ((dap-session-created . (lambda (_arg)
+                              (projectile-save-project-buffers)))
+     (dap-stopped-hook . (lambda (arg)
+                           (call-interactively #'dap-hydra)))
+     (python-mode . dap-mode))
+
+    :config
+    (require 'dap-python)
+    (require 'dap-lldb)
+    (setq dap-python-debugger 'debugpy)
+    (defun dap-python--pyenv-executable-find (command)
+      (with-venv (executable-find "python")))
+    :init
+    ;; prevent minibuffer prompt about reloading from disk
+    ;; (setq revert-without-query '("~/tmp-inspect-df.csv"))
+    (setq dap-auto-configure-features '(sessions repl))
+    (setq dap-auto-show-output t))
 #+end_src
 
 ** SQL
