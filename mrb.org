@@ -1007,6 +1007,8 @@ For file management itself, dired is the defacto standard It's builtin so =use-p
     :hook (dired-mode-hook . auto-revert-mode)
     :config
       (setq dired-bind-jump nil) ; Do not bind to C-x C-j, we do jabber prefix there
+      (when (equal system-type 'darwin)
+        (setq insert-directory-program "/usr/local/bin/gls"))
   )
 #+end_src
 
