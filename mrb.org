@@ -20,8 +20,7 @@ This document is irregularly published and lives in different locations:
 
 #+TOC: headlines 4
 
-* Files for configuration
-Next to this main configuration file (=mrb.org=), two other files are involved in the configuration:
+* Next to this main configuration file (=mrb.org=), two other files are involved in the configuration:
 
 1. =early-init.el= emacs' early initialization file;
    #+INCLUDE: early-init.el src emacs-lisp
@@ -68,9 +67,9 @@ While we are here, define a snippet which should go in shell scripts. We will re
 
 And edit the file obviously. __Note: this script passes shellcheck with no warnings or errors__
 
-#+begin_src sh :exports code :tangle ~/bin/edit :shebang #!/bin/bash
+#+begin_src sh :exports code :tangle ~/bin/emacs :shebang #!/bin/bash
   # <<tangle-header>>
-  # Wrapper for emacs-client usage to handle specific cases:
+  # Shell-script emacs that wraps emacs-client usage to handle specific cases:
   # - no filename given
   # - stdin editing
   # - force tty
@@ -158,6 +157,7 @@ Emacs can run as a /server/ meaning that its process is always active and a spec
 It's far from trivial, for me at least, on how to properly configure this, assuming you have some special wishes. I've certainly spent my time on trying to get it right.
 
 *** Things that I'm sure of I want
+
 Here's what I know for sure on what I want:
 
 1. I want to have at least one server process for 'default' editing so emacs does not have to start a process for every file; the goal here is to have fast opening of files to edit. This is critical. I'm assuming that for this a server-like-setup is needed.
@@ -168,14 +168,15 @@ Here's what I know for sure on what I want:
 6. allow specific handlers, like =mailto:=
 
 *** Things I see potential for, but not sure of
+
 Having a server/servers opens a couple of options which I may like, but not sure on how to do or even if I understand them properly
 
 - given that the socket can be a TCP socket, does that mean I can use emacsclient -some-arg <the IP of the socket> on one machine to use emacs on another machine? How well would that work? This would be awesome to have a small computer which doesn't need an emacs config to use my emacs on another machine, but I suspect I misunderstand how this works
 
 - having multiple emacs servers could help with specific scenario's for mu4e for example. I'd love to have the mu-server in its own process and just use that from other emacs servers Similarly for long running language servers and or other processes which shouldn't be affected by me clawing words into my keyboard.
 
-*
-Package Management
+* Package Management
+
 Package handling, do this early so emacs knows where to find things. Package handling basically means two things:
 
 1. getting and installing packages, by default handled by package.el;
@@ -2890,15 +2891,16 @@ ERC seems to be the most used IRC client for emacs and included with it, so it w
 #+end_src
 
 ** Mastodon
+
 Not messaging or chatting perse, but a micro blog social network. The 'capture a toot' is hot-keyed through =xbindkeys= like other capture commands.
 
 #+begin_src emacs-lisp
   ;; Mastodon in emacs
   (use-package mastodon
     :config
-    (setq mastodon-instance-url "https://mastodon.nl"
-          mastodon-active-user "mrb"
-          ;; finds mastodon.nl in password-store and expects user field to be present
+    (setq mastodon-instance-url "https://hachyderm.io"
+          mastodon-active-user "@IPmonger"
+          ;; finds hachyderm.io in password-store and expects user field to be present
           mastodon-auth-source-file 'password-store)
 
     ;; Convenience function
@@ -2912,6 +2914,7 @@ edit-noframe --eval '(mrb/capture-toot)'
 #+end_src
 
 * Development settings
+
 Some settings which aid in development tasks.
 
 Trailing white-space can sneak into files without knowing it. I could enable the display of trailing white-space, but I find that annoying to look at. Instead I just remove it just before saving a file.  One solution is to enable a before-save-hook, which would make me the trailing-white-space police in all projects.
@@ -3513,26 +3516,21 @@ pydoc formatter
   DAP mode is used for python debugging.
 
 #+begin_src emacs-lisp
-  (use-package dap-mode
-    :after lsp-mode
-    :hook
-    ((dap-session-created . (lambda (_arg)
-                              (projectile-save-project-buffers)))
-     (dap-stopped-hook . (lambda (arg)
-                           (call-interactively #'dap-hydra)))
-     (python-mode . dap-mode))
+    (use-package dap-mode
+      :after lsp-mode
+      :hook
+      ((dap-session-created . (lambda (_arg)
+                                (projectile-save-project-buffers)))
+       (dap-stopped-hook . (lambda (arg)
+                             (call-interactively #'dap-hydra)))
+       (python-mode . dap-mode))
 
-    :config
-    (require 'dap-python)
-    (require 'dap-lldb)
-    (setq dap-python-debugger 'debugpy)
-    (defun dap-python--pyenv-executable-find (command)
-      (with-venv (executable-find "python")))
-    :init
-    ;; prevent minibuffer prompt about reloading from disk
-    ;; (setq revert-without-query '("~/tmp-inspect-df.csv"))
-    (setq dap-auto-configure-features '(sessions repl))
-    (setq dap-auto-show-output t))
+      :config
+      (require 'dap-python)
+      (setq dap-auto-configure-mode t
+            dap-auto-show-output t)
+      (defun dap-python--pyenv-executable-find (command)
+        (with-venv (executable-find "python")))
 #+end_src
 
 ** SQL
