@@ -3532,7 +3532,7 @@ pydoc formatter
       (setq dap-auto-configure-mode t
             dap-auto-show-output t)
       (defun dap-python--pyenv-executable-find (command)
-        (with-venv (executable-find "python")))
+        (with-venv (executable-find "python"))))
 #+end_src
 
 ** SQL
