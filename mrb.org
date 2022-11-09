@@ -67,7 +67,7 @@ While we are here, define a snippet which should go in shell scripts. We will re
 
 And edit the file obviously. __Note: this script passes shellcheck with no warnings or errors__
 
-#+begin_src sh :exports code :tangle ~/bin/emacs :shebang #!/bin/bash
+#+begin_src sh :exports code :tangle ~/bin/edit :shebang #!/bin/bash
   # <<tangle-header>>
   # Shell-script emacs that wraps emacs-client usage to handle specific cases:
   # - no filename given
@@ -3530,9 +3530,7 @@ pydoc formatter
       :config
       (require 'dap-python)
       (setq dap-auto-configure-mode t
-            dap-auto-show-output t)
-      (defun dap-python--pyenv-executable-find (command)
-        (with-venv (executable-find "python"))))
+            dap-auto-show-output t))
 #+end_src
 
 ** SQL
