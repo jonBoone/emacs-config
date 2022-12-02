@@ -2966,11 +2966,6 @@ For most of the languages I use (Bash, python, C, Go, HTML Haskell, Lua), the La
      :commands lsp-ui-mode
      :hook ((lsp-mode . lsp-ui-mode)
             (lsp-ui-peek-find-definitions))
-     :config
-     (outline-mode-map
-      :states 'normal
-      "C-j" 'nil
-      "C-k" 'nil)
      :init
      (setq lsp-ui-doc-show-with-cursor nil
            lsp-ui-doc-show-with-mouse nil
@@ -3518,19 +3513,23 @@ pydoc formatter
   DAP mode is used for python debugging.
 
 #+begin_src emacs-lisp
-    (use-package dap-mode
-      :after lsp-mode
-      :hook
-      ((dap-session-created . (lambda (_arg)
-                                (projectile-save-project-buffers)))
-       (dap-stopped-hook . (lambda (arg)
-                             (call-interactively #'dap-hydra)))
-       (python-mode . dap-mode))
-
-      :config
-      (require 'dap-python)
-      (setq dap-auto-configure-mode t
-            dap-auto-show-output t))
+  (use-package dap-mode
+    :ensure t
+    :after lsp-mode
+    :config
+    (dap-mode t)
+    (dap-ui-mode t)
+    (dap-tooltip-mode 1)
+    ;; use tooltips for mouse hover
+    ;; otherwise, dap-mode uses minibuffer
+    (tooltip-mode 1)
+    (require 'dap-python)
+    :hook
+    ((dap-session-created . (lambda (_arg)
+                              (projectile-save-project-buffers)))
+     (dap-stopped-hook . (lambda (arg)
+                           (call-interactively #'dap-hydra)))
+     (python-mode . dap-mode)))
 #+end_src
 
 ** SQL
