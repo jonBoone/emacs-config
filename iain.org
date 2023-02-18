@@ -1,5 +1,5 @@
 #+SETUPFILE: "~/.emacs.d/org-config.org"
-#+TITLE: My org-babel based emacs configuration
+#+TITLE: My org-babel based minimal emacs configuration for org-mode and org-roam support
 #+LANGUAGE: en
 #+OPTIONS:  H:5 toc:nil creator:nil email:nil author:t timestamp:t tags:nil tex:verbatim
 #+PROPERTY: header-args :results silent :noweb no-export

@@ -30,13 +30,8 @@
 (setq load-path (remove-if (lambda (x) (string-match-p "org$" x)) load-path))
 (add-to-list 'load-path "~/.emacs.d/straight/repos/org/lisp")
 
-;; My org file is posted using writefreely, which uses local variables
-;; we need them before the call to org-babel
-(add-to-list 'safe-local-variable-values '(writefreely-post-id . "wf83bq5jwz"))
-(add-to-list 'safe-local-variable-values '(writefreely-post-token . nil))
-
 ;; config-file var gets used in mrb.el as well, not sure I like that
-(setq config-file (expand-file-name "mrb.org" user-emacs-directory))
+(setq config-file (expand-file-name "iain.org" user-emacs-directory))
 
 ;; This produces mrb.el which is then loaded. It checks datetime before tangling.
 (org-babel-load-file config-file)
