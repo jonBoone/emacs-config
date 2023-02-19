@@ -6,15 +6,11 @@
  ;; If there is more than one, they won't work right.
  '(ansi-color-names-vector
    ["#2e3440" "#88c0d0" "#bf616a" "#5e81ac" "#ebcb8b" "#a3be8c" "#ebcb8b" "#e5e9f0"])
- '(autocrypt-accounts
-   '(("marcel@hsdev.com" "BC19C9D32D968224572D74A84EF46170ABE2ACDE" none)) nil nil "Set by autocrypt.el")
  '(compilation-scroll-output t)
  '(custom-safe-themes t)
- '(epg-gpg-program "/usr/bin/gpg2")
- '(explicit-shell-file-name "/bin/bash")
+ '(explicit-shell-file-name "/bin/zsh")
  '(font-lock-maximum-size nil)
  '(gud-gdb-command-name "gdb --annotate=1")
- '(guess-language-languages '(en de nl))
  '(ispell-use-framepop-p t)
  '(org-M-RET-may-split-line '((default . t) (headline)))
  '(org-agenda-custom-commands
@@ -30,7 +26,7 @@
       nil)
      ("p" "Active project list" tags-todo "-ignore-inactive+LEVEL>1-TODO=\"DONE\"-TODO=\"CANCELLED\"-TODO=\"INFO\""
       ((org-agenda-overriding-header "Active project list")
-       (org-agenda-skip-function 'mrb/skip-non-projects)
+       (org-agenda-skip-function 'iain/skip-non-projects)
        (org-agenda-dim-blocked-tasks nil)
        (org-agenda-group-by-property "Group")
        (org-agenda-sorting-strategy
@@ -118,26 +114,10 @@
  '(reb-re-syntax 'string)
  '(request-log-level 'verbose)
  '(safe-local-variable-values
-   '((magit-todos-exclude-globs "_minted-mrb/*" "*.texi" "org-config.org")
+   '((magit-todos-exclude-globs "_minted-iain/*" "*.texi" "org-config.org")
      (eval visual-fill-column-mode t)
      (eval visual-line-mode t)
      (eval setq visual-fill-column-width: nil)
-     (writefreely-post-id . "jnzt62gruo")
-     (writefreely-post-id . "dbv92wvpfi")
-     (writefreely-post-id . "j9nqdr0edr")
-     (writefreely-post-id . "3pn4uygr08")
-     (writefreely-post-id . "gg3pfn4cb2")
-     (writefreely-post-id . "t34o6ptyty")
-     (writefreely-post-id . "jl860566j7")
-     (writefreely-post-id . "xpuz7k4vf7")
-     (writefreely-post-id . "m52wflcl7q")
-     (writefreely-post-id . "wf83bq5jwz")
-     (writefreely-post-id)
-     (writefreely-post-token)
-     (TeX-master . t)
-     (hamlet/basic-offset . 4)
-     (haskell-process-use-ghci . t)
-     (haskell-indent-spaces . 4)
      (encoding . utf-8)
      (buffer-auto-save-file-name)))
  '(sgml-xml-mode t)
@@ -148,4 +128,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :slant normal :weight normal :height 110 :width normal)))))
+ '(default ((t (:family "FiraCode Nerd Font Mono" :slant normal :weight normal :height 140 :width normal)))))
