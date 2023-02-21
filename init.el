@@ -27,13 +27,13 @@
           "available"))
 
 ;; HACK: Disable Org-mode that was shipped with Emacs and add one I control
-(setq load-path (remove-if (lambda (x) (string-match-p "org$" x)) load-path))
+;; (setq load-path (remove-if (lambda (x) (string-match-p "org$" x)) load-path))
 (add-to-list 'load-path "~/.emacs.d/straight/repos/org-mode/lisp")
 
-;; config-file var gets used in mrb.el as well, not sure I like that
+;; config-file var gets used in iain.el as well, not sure I like that
 (setq config-file (expand-file-name "iain.org" user-emacs-directory))
 
-;; This produces mrb.el which is then loaded. It checks datetime before tangling.
+;; This produces iain.el which is then loaded. It checks datetime before tangling.
 (org-babel-load-file config-file)
 
 ;; END init.el
@@ -47,6 +47,3 @@
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
 (put 'list-timers 'disabled nil)
-
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(load-file custom-file)

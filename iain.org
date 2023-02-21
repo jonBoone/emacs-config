@@ -1,4 +1,4 @@
-#+SETUPFILE: "~/.emacs.d/org-config.org"
+#+SETUPFILE: "~/.emacs.d/org-config.org" 
 #+TITLE: My org-babel based minimal emacs configuration for org-mode and org-roam support
 #+LANGUAGE: en
 #+OPTIONS:  H:5 toc:nil creator:nil email:nil author:t timestamp:t tags:nil tex:verbatim
@@ -37,7 +37,8 @@ The first thing I want to take care of is to make customization possible and sto
 
 #+begin_src emacs-lisp
   (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-  (load custom-file)
+  (when (file-exists-p custom-file)
+    (load custom-file))
 #+end_src
 
 The config file =iain.org= gets opened *a lot* because I tend to fiddle with this config at least once a day. So, it warrants it's own keybinding, but it will have to wait until [[Key bindings]] before we can use the =bind-key= package.
