@@ -44,7 +44,7 @@ The first thing I want to take care of is to make customization possible and sto
 The config file =iain.org= gets opened *a lot* because I tend to fiddle with this config at least once a day. So, it warrants it's own keybinding, but it will have to wait until [[Key bindings]] before we can use the =bind-key= package.
 
 #+begin_src emacs-lisp
-  (defun isin/open-config ()
+  (defun iain/open-config ()
     (interactive)
     (find-file config-file))
 #+end_src
@@ -354,7 +354,7 @@ Finally, I want to prevent producing files which have trailing spaces, because t
 
   ;; Let marks be set when shift arrowing, everybody does this
   (setq shift-select-mode t)
-  (delete-selection-mode 1)
+  (delete-selection-mode t)
 
   ;; Only require to type 'y' or 'n' instead of 'yes' or 'no' when prompted
   (defalias 'yes-or-no-p 'y-or-n-p)
@@ -1295,7 +1295,7 @@ Also make sure we never load org from internal, this can happen when functions w
            ("C-c a"   . 'org-agenda)
            ("C-c b"   . 'org-switchb)
            ("C-s-s"   . 'org-save-all-org-buffers)
-           ("C-c l"   . 'org-store-link)        ; Is this not bound to C-c l by default
+           ("C-c l"   . 'org-store-link)
            :map org-mode-map
            ("s-."     . 'org-todo)
            ("s->"     . 'iain/org-cancel-todo)
@@ -2154,6 +2154,25 @@ We do not want to inherit this tag automatically, as its behavior is already sub
   (add-to-list 'org-tags-exclude-from-inheritance '"encrypt")
   (add-to-list 'org-tags-exclude-from-inheritance '"crypt")
 #+end_src
+
+** Org-Roam configuration
+#+begin_src emacs-lisp
+  (use-package org-roam
+    :after   org
+    :init    (setq org-roam-v2-ack t) ;; Acknowledge V2 upgrade
+    :custom  (org-roam-directory (file-truename org-directory))
+    :config  (org-roam-setup)
+    :bind    (("C-c n f" . org-roam-node-find)
+              ("C-c n r" . org-roam-node-random)
+              :map org-mode-map
+              ("C-c n i" . org-roam-node-insert)
+              ("C-c n o" . org-id-get-create)
+              ("C-c n t" . org-roam-tag-add)
+              ("C-c n a" . org-roam-alias-add)
+              ("C-c n l" . org-roam-buffer-toggle)))
+
+#+end_src
+
 
 ** Old configuration
 Below is what was contained in the old configuration. I will slowly migrate this into more literal sections
