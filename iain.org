@@ -589,23 +589,39 @@ Many settings have to do with how the screen looks and behaves in a visual way. 
 Let's set up some basics first, background dark, some default frame and cursor properties:
 
 #+begin_src emacs-lisp
-    (setq iain/cursor-type 'box)
-    (setq iain/cursor-color "DarkOrange")  ; in fat orange color
+  (setq iain/cursor-type 'box)
+  (setq iain/cursor-color "DarkOrange")  ; in fat orange color
 
 
-    (setq-default frame-background-mode 'dark)
-    (set-mouse-color "white")
+  (setq-default frame-background-mode 'dark)
+  (set-mouse-color "white")
 
-    ;; Only show cursor in the active window.
-    (setq-default cursor-in-non-selected-windows nil)
+  ;; Only show cursor in the active window.
+  (setq-default cursor-in-non-selected-windows nil)
 
-    ;;Default frame properties frame position, color, etc
-    (setq default-frame-alist
-          `((cursor-type . ,iain/cursor-type )
-            (height . 60) (width . 100)
-            (cursor-color . ,iain/cursor-color)
-            (internal-border-width . 24)
-            (mouse-color . "white")))
+  ;;Default frame properties frame position, color, etc
+  (setq default-frame-alist
+        `((cursor-type . ,iain/cursor-type )
+          (height . 60) (width . 100)
+          (cursor-color . ,iain/cursor-color)
+          (internal-border-width . 24)
+          (mouse-color . "white")))
+
+  ;; Set default, fixed and variable pitch fonts
+  ;; Use M-x menu-set-font to view available fonts
+  (use-package mixed-pitch
+    :hook
+    (text-mode . mixed-pitch-mode)
+    :config
+    (set-face-attribute 'default nil :font "DejaVu Sans Mono" :height 130)
+    (set-face-attribute 'fixed-pitch nil :font "DejaVu Sans Mono")
+    (set-face-attribute 'variable-pitch nil :font "DejaVu Sans"))
+  (add-hook 'mixed-pitch-mode-hook #'solaire-mode-reset)
+
+  ;; proportional font pop-up frame support
+  (use-package company-posframe
+    :config
+    (company-posframe-mode 1))
 #+end_src
 
 ** Mode-line and status info
@@ -1149,6 +1165,12 @@ For file management itself, dired is the defacto standard It's builtin so =use-p
   (use-package dired
     :straight (:type built-in)
     ;; auto-revert global is only for file buffers, so explicit enable is needed
+    :config
+    (put
+     'dired-find-alternate-file 'disabled nil)                 ; open dired in same buffer
+    (setq
+     dired-listing-switches "-agho --group-directories-first"  ; sort dired buffers
+     dired-dwim-target t)                                      ; copy and move files between dired buffers
     :hook (dired-mode-hook . auto-revert-mode))
 #+end_src
 
@@ -1284,8 +1306,7 @@ Also make sure we never load org from internal, this can happen when functions w
            ("s->"   . 'iain/org-agenda-cancel-todo)
            ("C-s-." . 'iain/force-org-agenda-todo)
            ("C-."   . 'org-agenda-schedule)
-           ("M-p"   . 'org-set-property)
-           ("C-x m" . 'iain/construct-mail))
+           ("M-p"   . 'org-set-property))
 
     :config
 
@@ -1304,14 +1325,20 @@ Also make sure we never load org from internal, this can happen when functions w
     (use-package org-protocol
       :config
       ;; If nothing is specified, create a TODO item
-      (setq org-protocol-default-template-key "t")))
+      (setq org-protocol-default-template-key "t"))
+    ;; Nice bullets
+    (use-package org-superstar
+      :config
+      (setq org-superstar-special-todo-items t)
+      (add-hook 'org-mode-hook (lambda ()
+                                 (org-superstar-mode 1)))))
 #+end_src
 
 Gather generic config variables for orgmode in one section
 
 #+name: orgmode-generalconfig
 #+begin_src emacs-lisp :tangle no
-  (setq org-directory "~/dat/org/"
+  (setq org-directory "~/Dropbox/pkb/org/"
         org-metadir (concat org-directory "_orgmeta/")
 
         org-use-fast-todo-selection t
@@ -1341,7 +1368,6 @@ Gather generic config variables for orgmode in one section
         org-return-follows-link t
         org-support-shift-select 'always
 
-
         ;; Auto detect blank line need, this is the default, but I explicitly set this
         ;; because it needs to be this or my capturing breaks due to org-capture popup
         org-blank-before-new-entry '((heading . auto) (plain-list-item . auto))
@@ -1369,6 +1395,8 @@ Gather generic config variables for orgmode in one section
         org-stuck-projects '("-inactive/TODO" ("TODO" "WAITING") nil "")
         org-track-ordered-property-with-tag nil
         org-startup-indented t
+        org-startup-with-inline-images t
+        org-image-actual-width '(300)
 
         org-archive-location (concat org-metadir "archive.org::datetree/")
         org-default-notes-file (concat org-directory "GTD.org")
@@ -1753,7 +1781,7 @@ There are a couple of ways within org to emphasize text inline for *bold*, /ital
     :after org
     :hook (org-mode . org-appear-mode)
     :custom
-    (org-hide-emphasis-markers t)    ; Is this used by org-appear mode?
+    (org-hide-emphasis-markers t)
     )
 #+end_src
 
@@ -2108,28 +2136,6 @@ There's a package =org-attach-screenshot= which matches my use-case 99% so let's
 
 The 1% I was referring to above is that the original package exclusively supports org-mode. I patched it, which was trivial to support org-mode and all its derived modes. (org-journal in my case)
 
-** Publishing
-There's plenty ways to publish orgmode content on the web. I use a couple of them sparingly. For most of them I don't need a permanent configuration. For the ones that I do need a config, there's this section.
-
-*** Writefreely
-Writefreely is a Write.as derivative and published as open source. This allows me to just kick out a quick orgmode file with a =#+TITLE:= and a =#+DATE:= header and throw it on a blog like site rather quickly.
-
-#+begin_src emacs-lisp
-  ;; Still needed:
-  ;; - post as draft by default, this prevents automatic posting by accident for federated collections
-  ;; - save augment -> publish / update automatically, probably a custom hook on minor mode?
-  ;; - wf: have autorefresh GET parameter which monitors updates and
-  ;;       refreshes automatically
-  ;; - set local save dir for the files
-  ;; Make sure the variables of THIS file are loaded before THIS file is loaded
-  (use-package writefreely
-    :after org
-    :custom
-    (writefreely-instance-url "https://qua.name")
-    (writefreely-instance-api-endpoint "https://qua.name/api")
-    (writefreely-maybe-publish-created-date t)
-    (writefreely-auth-token (password-store-get "Qua.name/accesstoken")))
-#+end_src
 ** Encrypting information in org-mode
 I use the /encrypt/ tag for encrypting sections in org-mode (and sometimes my journal). The sections get encrypted and decrypted automatically on saving and opening. This uses the EasyPG library to get to my GPG key.
 
