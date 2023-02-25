@@ -2,7 +2,7 @@
 #+TITLE: My org-babel based minimal emacs configuration for org-mode and org-roam support
 #+LANGUAGE: en
 #+OPTIONS:  H:5 toc:nil creator:nil email:nil author:t timestamp:t tags:nil tex:verbatim
-#+PROPERTY: header-args :results silent :noweb no-export
+#+PROPERTY: header-args :noweb no-export
 
 Last update: call_last_modified()
 
@@ -28,8 +28,8 @@ Ideally these files should be produced by org-babel as well, just like the main 
 Small snippet to have last modified timestamp inserted when exporting this file (see line above which has the call to =last_modified=)
 
 #+NAME: last_modified
-#+BEGIN_SRC sh
-git log -1 --pretty="format:%ci" ~/.emacs.d/iain.org
+#+BEGIN_SRC shell :results value raw output append
+  git log -1 --pretty="format:%ci" ~/.emacs.d/iain.org
 #+END_SRC
 
 * Preparing for lift-off
@@ -541,7 +541,7 @@ For this to work properly we have to define a whole new input-method based on a 
   (set-language-environment "UTF-8")
   ;; Make sure our timestamps within emacs are independent of system locale
   ;; This is mostly for orgmode I guess.
-  (setq system-time-locale "nl_NL.UTF-8")
+  (setq system-time-locale "en_US.UTF-8")
 
 
   ;; Activate it for all text modes
@@ -613,10 +613,10 @@ Let's set up some basics first, background dark, some default frame and cursor p
     :hook
     (text-mode . mixed-pitch-mode)
     :config
-    (set-face-attribute 'default nil :font "DejaVu Sans Mono" :height 130)
-    (set-face-attribute 'fixed-pitch nil :font "DejaVu Sans Mono")
-    (set-face-attribute 'variable-pitch nil :font "DejaVu Sans"))
-  (add-hook 'mixed-pitch-mode-hook #'solaire-mode-reset)
+    (set-face-attribute 'default t :font "FiraCode Nerd Font Mono" :height 160)
+    (set-face-attribute 'fixed-pitch nil :font "FiraCode Nerd Font Mono")
+    (set-face-attribute 'variable-pitch nil :font "Helvetica Neue"))
+  (add-hook 'mixed-pitch-mode-hook #'solaire-mode-reset)n
 
   ;; proportional font pop-up frame support
   (use-package company-posframe
