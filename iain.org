@@ -3660,7 +3660,3 @@ When we are all done with this, provide it.
   ;;; iain ends here
 #+end_src
 
-# Local Variables:
-# writefreely-post-id: "wf83bq5jwz"
-# writefreely-post-token: nil
-# End:
