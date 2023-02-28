@@ -1,4 +1,4 @@
-#+SETUPFILE: "~/.emacs.d/org-config.org" 
+#+SETUPFILE: "~/.emacs.d/org-config.org"
 #+TITLE: My org-babel based minimal emacs configuration for org-mode and org-roam support
 #+LANGUAGE: en
 #+OPTIONS:  H:5 toc:nil creator:nil email:nil author:t timestamp:t tags:nil tex:verbatim
@@ -28,7 +28,7 @@ Ideally these files should be produced by org-babel as well, just like the main 
 Small snippet to have last modified timestamp inserted when exporting this file (see line above which has the call to =last_modified=)
 
 #+NAME: last_modified
-#+BEGIN_SRC shell :results value raw output append
+#+BEGIN_SRC shell :results value raw
   git log -1 --pretty="format:%ci" ~/.emacs.d/iain.org
 #+END_SRC
 
@@ -613,10 +613,9 @@ Let's set up some basics first, background dark, some default frame and cursor p
     :hook
     (text-mode . mixed-pitch-mode)
     :config
-    (set-face-attribute 'default t :font "FiraCode Nerd Font Mono" :height 160)
-    (set-face-attribute 'fixed-pitch nil :font "FiraCode Nerd Font Mono")
-    (set-face-attribute 'variable-pitch nil :font "Helvetica Neue"))
-  (add-hook 'mixed-pitch-mode-hook #'solaire-mode-reset)n
+    (set-face-attribute 'default nil :font "FiraCode Nerd Font Mono" :height 160)
+    (set-face-attribute 'fixed-pitch nil :font "FiraCode Nerd Font Mono" :height 160)
+    (set-face-attribute 'variable-pitch nil :font "Helvetica Neue" :height 160))
 
   ;; proportional font pop-up frame support
   (use-package company-posframe
@@ -1351,7 +1350,7 @@ Gather generic config variables for orgmode in one section
         org-enable-priority-commands nil
 
         ;; Agenda settings
-        org-agenda-files (concat org-directory ".agenda_files")
+        org-agenda-files (list (concat org-directory ".agenda_files"))
         org-agenda-include-diary t
         org-agenda-start-with-log-mode t
         org-agenda-todo-ignore-scheduled "future"
@@ -3651,7 +3650,7 @@ I've chosen =ag= as the engine for /grepping/ the files because it's very fast. 
   (use-package ag)
 #+end_src
 
-*
+
 Finale
 When we are all done with this, provide it.
 
@@ -3659,4 +3658,3 @@ When we are all done with this, provide it.
   (provide 'iain)
   ;;; iain ends here
 #+end_src
-
